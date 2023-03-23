@@ -8,21 +8,22 @@
 
 class USpringArmComponent;
 class UCameraComponent;
-
+class USInteractionComponent;
 
 UCLASS()
 class HDZMSANDBOX_API ASCharacter : public ACharacter
-{
+{	
 	GENERATED_BODY()
+
+		//you can directly change the macro of GENERATED_BODY in class.generated.h , so to change the line it should be.
+protected:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> PorjectileClass;
 
 public:
 	// Sets default values for this character's properties
 	ASCharacter();
 
-//	UPROPERTY(EditAnywhere)
-//		float MoveForwardSpeed;
-//	UPROPERTY(EditAnywhere)
-//		float MoveRightSpeed;
 
 protected:
 
@@ -32,11 +33,17 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* ComCamera;
 
+	UPROPERTY(VisibleAnywhere)
+	USInteractionComponent* ComSInteraction;
+
 
 private:
 
 	void MoveForward(float Val);
 	void MoveRight(float Val);
+	
+	void PrimaryAttack();
+	void PrimaryInteraction();
 
 
 protected:
