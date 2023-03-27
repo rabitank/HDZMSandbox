@@ -6,6 +6,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include <SInteractionComponent.h>
+#include "Animation/AnimMontage.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
 
 
 // Sets default values
@@ -32,7 +35,7 @@ ASCharacter::ASCharacter()
 	//it used to be set true in default;
 	bUseControllerRotationYaw = false; 
 
-
+	DashDistance = 3.f;
 }
 
 //rotate to controller direction and move forward
@@ -65,21 +68,86 @@ void ASCharacter::MoveRight(float Val)
 void ASCharacter::PrimaryAttack()
 {
 
-	//Muzzle: shoot point; find the socket in meshSkeletonTree
-	//Muzzle_01 at rightHand
-	FTransform SMagTM(GetControlRotation(), GetMesh()->GetSocketLocation(TEXT("Muzzle_01")));
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimeHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_Elapsed, 0.2f);
+	// recallBackFunction: PrimaryAttack_Elapsed
+}
+
+void ASCharacter::PrimaryAttack_Elapsed()
+{
+	FTransform SMagTM;
+	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
 
 	FActorSpawnParameters SMagspawnPars;
 	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SMagspawnPars.Instigator = this;
 
-	GetWorld()->SpawnActor<AActor>(PorjectileClass,SMagTM,SMagspawnPars);
+	GetWorld()->SpawnActor<AActor>(PorjectileClass, SMagTM, SMagspawnPars);
 }
-
 
 void ASCharacter::PrimaryInteraction()
 {
 	//ComSInteraction cant be nullptr; may need check?
 	ComSInteraction->PrimaryInteraction();
+}
+
+void ASCharacter::Dash()
+{
+	PlayAnimMontage(DashAnim);
+	GetWorldTimerManager().SetTimer(TimeHandle_Dash,this,&ASCharacter::Dash_Elapsed,0.2f);
+}
+
+void ASCharacter::Dash_Elapsed()
+{
+	FTransform SMagTM;
+	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
+
+	FActorSpawnParameters SMagspawnPars;
+	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SMagspawnPars.Instigator = this;
+
+	GetWorld()->SpawnActor<AActor>(DashPorClass, SMagTM, SMagspawnPars);
+
+	//then The DashPorClass will make the instigator move to it
+}
+
+bool ASCharacter::GetProjectileAttackTM(FTransform& SprojectileTM)
+{
+	FVector handLocation = GetMesh()->GetSocketLocation(TEXT("Muzzle_01"));
+
+	FHitResult hitResult;
+	float radians = 10000.f;
+	FVector start = ComCamera->GetComponentLocation();
+	FVector end = start + ComCamera->GetComponentRotation().Vector() * radians;
+	FCollisionObjectQueryParams queryParams(FCollisionObjectQueryParams::AllDynamicObjects);
+	queryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+
+	bool isSuccessed = GetWorld()->LineTraceSingleByObjectType(hitResult, start, end, queryParams);
+	if (isSuccessed)
+	{
+		FVector targetLocation = hitResult.Location;
+		FRotator projectileRot = UKismetMathLibrary::MakeRotFromX(targetLocation - handLocation);
+
+		SprojectileTM = FTransform(projectileRot, handLocation);
+		DrawDebugSphere(GetWorld(), hitResult.Location, 30.f, 12, FColor::Yellow, false, 2.f);
+	}
+	else
+	{
+		SprojectileTM = FTransform(GetControlRotation(), GetMesh()->GetSocketLocation(TEXT("Muzzle_01")));
+	}
+	return isSuccessed;
+}
+
+void ASCharacter::BlackholeAttack()
+{
+	FTransform SMagTM;
+	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
+
+	FActorSpawnParameters SMagspawnPars;
+	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SMagspawnPars.Instigator = this;
+
+	GetWorld()->SpawnActor<AActor>(BlackholeClass, SMagTM, SMagspawnPars);
 }
 
 // Called when the game starts or when spawned
@@ -116,11 +184,10 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	//you cant directly call componentMethod;
 	PlayerInputComponent->BindAction("PrimaryInteract",IE_Pressed, this, &ASCharacter::PrimaryInteraction);
 
+	//bind E
+	PlayerInputComponent->BindAction("BlackholeAttack",IE_Pressed, this, &ASCharacter::BlackholeAttack);
 
-
-
-
+	PlayerInputComponent->BindAction("Dash",IE_Pressed, this, &ASCharacter::Dash);
+	
 }
-
-
 

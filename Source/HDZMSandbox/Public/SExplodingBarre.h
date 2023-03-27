@@ -28,9 +28,16 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class URadialForceComponent* ComExplodForce;
 
+	//InitializeComponents post
+	virtual void PostInitializeComponents() override;
+
+
 private:
 	UFUNCTION()
-	void FireImpulseForce(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	UFUNCTION(BlueprintCallable)
+	void FireImpulseForce();
 
 public:	
 	// Called every frame

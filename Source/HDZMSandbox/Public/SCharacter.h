@@ -17,8 +17,28 @@ class HDZMSANDBOX_API ASCharacter : public ACharacter
 
 		//you can directly change the macro of GENERATED_BODY in class.generated.h , so to change the line it should be.
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> PorjectileClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> BlackholeClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	class UAnimMontage* AttackAnim;
+	
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	TSubclassOf<AActor> DashPorClass;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	class UAnimMontage* DashAnim;
+	
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float DashDistance;
+
+	
+	FTimerHandle TimeHandle_PrimaryAttack;
+	FTimerHandle TimeHandle_Dash;
+
 
 public:
 	// Sets default values for this character's properties
@@ -43,8 +63,16 @@ private:
 	void MoveRight(float Val);
 	
 	void PrimaryAttack();
+	void PrimaryAttack_Elapsed();
+
+	void BlackholeAttack();
 	void PrimaryInteraction();
 
+	void Dash();
+	void Dash_Elapsed();
+private:
+
+	bool GetProjectileAttackTM(FTransform& SprojectileTM);
 
 protected:
 	// Called when the game starts or when spawned

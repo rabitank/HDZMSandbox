@@ -29,6 +29,7 @@ ASMagicProjectile::ASMagicProjectile()
 	ComMovement->InitialSpeed = 1000.f;
 	ComMovement->bRotationFollowsVelocity = true;
 	ComMovement->bInitialVelocityInLocalSpace= true;
+	ComMovement->ProjectileGravityScale = 0.f;
 
 	ComEffectParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SMagComParticleSystem"));
 	ComEffectParticle->SetupAttachment(RootComponent);
