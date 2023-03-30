@@ -5,34 +5,29 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include <SAttributeComponent.h>
 
 // Sets default values
 ASMagicProjectile::ASMagicProjectile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	ComSphere->OnComponentBeginOverlap.AddDynamic(this,&ASMagicProjectile::OnActorOverlap);
 
-	ComSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SMagComSphere"));
-	RootComponent = ComSphere;
-
-
-	//Created CollisionProfile "Projectile" in Engine-Collision
-	ComSphere->SetCollisionProfileName("Projectile");
-
-	//collision APi etc:
-	//ComSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	//ComSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-
-	//more information view:https://www.unrealengine.com/zh-CN/blog/collision-filtering
-
-	ComMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("SMagComProjectileMovement"));
-	ComMovement->InitialSpeed = 1000.f;
-	ComMovement->bRotationFollowsVelocity = true;
-	ComMovement->bInitialVelocityInLocalSpace= true;
-	ComMovement->ProjectileGravityScale = 0.f;
-
-	ComEffectParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SMagComParticleSystem"));
-	ComEffectParticle->SetupAttachment(RootComponent);
+}
+void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor!= GetInstigator()) //not nullptr
+	{
+		//StaticClass() getType in UE? = typeof()? ,return UClass*!!!
+		//GetComponentByClass: iterator all comps untile meet the same types comp
+		USAttributeComponent* comAttribute =(USAttributeComponent*) OtherActor->GetComponentByClass(USAttributeComponent::StaticClass());
+		if (ensure(comAttribute))
+		{
+			comAttribute->ApplyHealthChangeDelta(-20.f);
+			Destroy();
+		}
+	}
 
 }
 
@@ -42,6 +37,7 @@ void ASMagicProjectile::BeginPlay()
 	Super::BeginPlay();
 	
 }
+
 
 // Called every frame
 void ASMagicProjectile::Tick(float DeltaTime)

@@ -9,6 +9,7 @@
 #include "Animation/AnimMontage.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include <SAttributeComponent.h>
 
 
 // Sets default values
@@ -27,6 +28,9 @@ ASCharacter::ASCharacter()
 	ComCamera = CreateDefaultSubobject<UCameraComponent>("SChaComCamera");
 	ComCamera->SetupAttachment(ComSpringArm);
 
+	ComSAttribute = CreateDefaultSubobject<USAttributeComponent>("SChaComSAttribute");
+
+
 	//make char rotate CharmainDirection  to movement direction
 	GetCharacterMovement()->bOrientRotationToMovement = true; 
 
@@ -36,6 +40,28 @@ ASCharacter::ASCharacter()
 	bUseControllerRotationYaw = false; 
 
 	DashDistance = 3.f;
+
+
+
+}
+
+void ASCharacter::OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta)
+{
+	//if die , can control	
+	if (newHealth <= 0.f && delta<0.f)
+	{
+		APlayerController* controllerPC =Cast<APlayerController>(GetController());
+		DisableInput(controllerPC);
+
+	}
+}
+
+void ASCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	ComSAttribute->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
+
 }
 
 //rotate to controller direction and move forward
@@ -65,29 +91,12 @@ void ASCharacter::MoveRight(float Val)
 	AddMovementInput(rightVector, Val);
 }
 
-void ASCharacter::PrimaryAttack()
-{
 
-	PlayAnimMontage(AttackAnim);
-	GetWorldTimerManager().SetTimer(TimeHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_Elapsed, 0.2f);
-	// recallBackFunction: PrimaryAttack_Elapsed
-}
-
-void ASCharacter::PrimaryAttack_Elapsed()
-{
-	FTransform SMagTM;
-	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
-
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SMagspawnPars.Instigator = this;
-
-	GetWorld()->SpawnActor<AActor>(PorjectileClass, SMagTM, SMagspawnPars);
-}
 
 void ASCharacter::PrimaryInteraction()
 {
 	//ComSInteraction cant be nullptr; may need check?
+	if(ComSInteraction)
 	ComSInteraction->PrimaryInteraction();
 }
 
@@ -99,56 +108,80 @@ void ASCharacter::Dash()
 
 void ASCharacter::Dash_Elapsed()
 {
-	FTransform SMagTM;
-	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
+//then The DashPorClass will make the instigator move to it
+	SpawnProjectile(DashPorClass);
+}
+void ASCharacter::PrimaryAttack()
+{
 
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SMagspawnPars.Instigator = this;
-
-	GetWorld()->SpawnActor<AActor>(DashPorClass, SMagTM, SMagspawnPars);
-
-	//then The DashPorClass will make the instigator move to it
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimeHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_Elapsed, 0.2f);
+	// recallBackFunction: PrimaryAttack_Elapsed
 }
 
-bool ASCharacter::GetProjectileAttackTM(FTransform& SprojectileTM)
+void ASCharacter::PrimaryAttack_Elapsed()
 {
-	FVector handLocation = GetMesh()->GetSocketLocation(TEXT("Muzzle_01"));
+	SpawnProjectile(MagicProjectile);
 
-	FHitResult hitResult;
-	float radians = 10000.f;
-	FVector start = ComCamera->GetComponentLocation();
-	FVector end = start + ComCamera->GetComponentRotation().Vector() * radians;
-	FCollisionObjectQueryParams queryParams(FCollisionObjectQueryParams::AllDynamicObjects);
-	queryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-
-	bool isSuccessed = GetWorld()->LineTraceSingleByObjectType(hitResult, start, end, queryParams);
-	if (isSuccessed)
-	{
-		FVector targetLocation = hitResult.Location;
-		FRotator projectileRot = UKismetMathLibrary::MakeRotFromX(targetLocation - handLocation);
-
-		SprojectileTM = FTransform(projectileRot, handLocation);
-		DrawDebugSphere(GetWorld(), hitResult.Location, 30.f, 12, FColor::Yellow, false, 2.f);
-	}
-	else
-	{
-		SprojectileTM = FTransform(GetControlRotation(), GetMesh()->GetSocketLocation(TEXT("Muzzle_01")));
-	}
-	return isSuccessed;
 }
 
 void ASCharacter::BlackholeAttack()
 {
-	FTransform SMagTM;
-	bool  isSuccessed = GetProjectileAttackTM(SMagTM);
-
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SMagspawnPars.Instigator = this;
-
-	GetWorld()->SpawnActor<AActor>(BlackholeClass, SMagTM, SMagspawnPars);
+	SpawnProjectile(BlackholeClass);
 }
+
+void ASCharacter::SpawnProjectile(TSubclassOf<AActor> projectileType)
+{
+	//ensure:
+	//assert in ue? or just a temp stop, you can continue
+	//and it wouldnot appare in release Version
+	//ensure: stop once if cant pass
+	//ensureAlways:always stop if cant pass
+	if (ensureAlways(MagicProjectile))
+	{ 
+		FTransform SMagTM;
+
+		FVector handLocation = GetMesh()->GetSocketLocation(TEXT("Muzzle_01"));
+
+		FCollisionShape shape;
+		shape.SetSphere(20.f);
+
+		FCollisionQueryParams params;
+		params.AddIgnoredActor(this);
+		FCollisionObjectQueryParams queryParams(FCollisionObjectQueryParams::AllDynamicObjects);
+		queryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+		queryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+		queryParams.AddObjectTypesToQuery(ECC_Pawn);
+
+		float radians = 50000.f;
+		FVector start = ComCamera->GetComponentLocation() + ComCamera->GetComponentRotation().Vector()*50.f;
+		FVector end = start + ComCamera->GetComponentRotation().Vector() * radians;
+		
+
+		FHitResult hitResult;
+
+		bool isSuccessed = GetWorld()->SweepSingleByObjectType(hitResult, start, end,FQuat::Identity, queryParams,shape,params);
+		if (isSuccessed)
+		{
+			end = hitResult.ImpactPoint;
+
+		}
+
+		FRotator projectileRot = UKismetMathLibrary::MakeRotFromX(end - handLocation);
+		SMagTM = FTransform(projectileRot, handLocation);
+		DrawDebugSphere(GetWorld(), hitResult.Location, 30.f, 12, FColor::Yellow, false, 2.f);
+		
+
+		FActorSpawnParameters SMagspawnPars;
+		SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SMagspawnPars.Instigator = this;
+
+		GetWorld()->SpawnActor<AActor>(projectileType, SMagTM, SMagspawnPars);
+	}
+}
+
+
+
 
 // Called when the game starts or when spawned
 void ASCharacter::BeginPlay()

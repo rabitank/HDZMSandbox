@@ -14,18 +14,7 @@ ASBlackhole::ASBlackhole()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ComSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SBlaComSphere"));
-	RootComponent = ComSphere;
 
-
-
-	ComBlackholeSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SBlaComBlackholeSphere"));
-	ComBlackholeSphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
-	ComBlackholeSphere->bMultiBodyOverlap = true;
-
-
-	//Created CollisionProfile "Projectile" in Engine-Collision
-	ComSphere->SetCollisionProfileName("Projectile");
 
 	//collision APi etc:
 	//ComSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -33,16 +22,9 @@ ASBlackhole::ASBlackhole()
 
 	//more information view:https://www.unrealengine.com/zh-CN/blog/collision-filtering
 
-	ComMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("SBlaComProjectileMovement"));
-	ComMovement->InitialSpeed = 1000.f;
-	ComMovement->bRotationFollowsVelocity = true;
-	ComMovement->bInitialVelocityInLocalSpace = true;
-	ComMovement->ProjectileGravityScale = 0.f;
+	ComMovement->InitialSpeed = 2000.f;
 
-	ComEffectParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SBlaComParticleSystem"));
-	ComEffectParticle->SetupAttachment(RootComponent);
-	ComEffectParticle->bAutoActivate = false;
-
+	//ComEffectParticle->bAutoActivate = false;
 
 	//use comExplodForce to simulate BlackHole
 	ComExplodForce = CreateDefaultSubobject<URadialForceComponent>("SBlaComRadialForce");
@@ -51,10 +33,12 @@ ASBlackhole::ASBlackhole()
 	ComExplodForce->SetAutoActivate(false);
 	ComExplodForce->bImpulseVelChange = true;
 	ComExplodForce->AddCollisionChannelToAffect(ECC_WorldDynamic);
+	ComExplodForce->AddCollisionChannelToAffect(ECC_PhysicsBody);
 }
 
 void ASBlackhole::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(OtherActor)
 	OtherActor->Destroy();
 }
 

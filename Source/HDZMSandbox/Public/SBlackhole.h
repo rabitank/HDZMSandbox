@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "SProjectileBase.h"
 #include "SBlackhole.generated.h"
 
 UCLASS()
-class HDZMSANDBOX_API ASBlackhole : public AActor
+class HDZMSANDBOX_API ASBlackhole : public ASProjectileBase
 {
 	GENERATED_BODY()
 	
@@ -15,19 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	ASBlackhole();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* ComSphere;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* ComBlackholeSphere;
-
-
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UProjectileMovementComponent* ComMovement;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UParticleSystemComponent* ComEffectParticle;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	class URadialForceComponent* ComExplodForce;

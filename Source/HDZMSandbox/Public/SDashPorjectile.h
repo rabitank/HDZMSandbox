@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "SProjectileBase.h"
 #include "SDashPorjectile.generated.h"
-
 UCLASS()
-class HDZMSANDBOX_API ASDashPorjectile : public AActor
+class HDZMSANDBOX_API ASDashPorjectile : public ASProjectileBase
 {
 	GENERATED_BODY()
 	
@@ -19,33 +19,26 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* ComSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UProjectileMovementComponent* ComMovement;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UParticleSystemComponent* ComEffectParticle;
+	virtual void Explode_Implementation() override;
+	void DashInstigator();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class UParticleSystem* ExploseParticle;
+	UPROPERTY(EditDefaultsOnly, Category = "Teleport")
+		float TeleportDelay;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Teleport")
+		float DetonateDelay;
 
-	UFUNCTION()
-	void DashInstigatorAndDestory();
 
+	FTimerHandle TimerHandle_Flytime;
 
 private:
 
 	virtual void PostInitializeComponents() override;
 
-	FTimerHandle TimerHandle_Flytime;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
-	void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) ;
 
 };

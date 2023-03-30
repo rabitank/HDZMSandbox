@@ -10,7 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class USInteractionComponent;
 
-UCLASS()
+UCLASS(Blueprintable)
 class HDZMSANDBOX_API ASCharacter : public ACharacter
 {	
 	GENERATED_BODY()
@@ -18,7 +18,7 @@ class HDZMSANDBOX_API ASCharacter : public ACharacter
 		//you can directly change the macro of GENERATED_BODY in class.generated.h , so to change the line it should be.
 protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> PorjectileClass;
+	TSubclassOf<AActor> MagicProjectile;
 	
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> BlackholeClass;
@@ -50,29 +50,35 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly)
 	USpringArmComponent* ComSpringArm;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UCameraComponent* ComCamera;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USInteractionComponent* ComSInteraction;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	class USAttributeComponent* ComSAttribute;
 
+	UFUNCTION()
+	void OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta);
+
+	virtual  void PostInitializeComponents() override;
 
 private:
 
 	void MoveForward(float Val);
 	void MoveRight(float Val);
 	
+	void PrimaryInteraction();
 	void PrimaryAttack();
 	void PrimaryAttack_Elapsed();
 
 	void BlackholeAttack();
-	void PrimaryInteraction();
 
 	void Dash();
 	void Dash_Elapsed();
-private:
 
-	bool GetProjectileAttackTM(FTransform& SprojectileTM);
+	void SpawnProjectile(TSubclassOf<AActor> projectileType );
 
 protected:
 	// Called when the game starts or when spawned
