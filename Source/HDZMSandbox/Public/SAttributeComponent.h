@@ -30,6 +30,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Attributes")
 	float Health;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Attributes")
+	float HealthMax;
+
 	//healthMax,Stamina,Strength
 	//Stamina:the physical and/or mental strength to do something that might be difficult and will take a long time
 
@@ -43,5 +47,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive();
+
+	UFUNCTION()
+		inline	bool IsMaxHealth() { return Health == HealthMax; }
 
 };

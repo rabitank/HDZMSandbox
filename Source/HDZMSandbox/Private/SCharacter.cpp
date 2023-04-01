@@ -10,6 +10,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
 #include <SAttributeComponent.h>
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -47,11 +48,22 @@ ASCharacter::ASCharacter()
 
 void ASCharacter::OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta)
 {
-	//if die , can control	
-	if (newHealth <= 0.f && delta<0.f)
+
+	if (delta < 0.f)
 	{
-		APlayerController* controllerPC =Cast<APlayerController>(GetController());
-		DisableInput(controllerPC);
+		GetMesh()->SetScalarParameterValueOnMaterials("HitTime", GetWorld()->GetTimeSeconds());
+		GetMesh()->SetScalarParameterValueOnMaterials("HitSpeed", 3.f);
+		GetMesh()->SetVectorParameterValueOnMaterials("FlashColor", FVector(0.9f, 0.f, 0.5f));
+	}
+	else
+	{
+		//if die , can control	
+		if (newHealth <= 0.f && delta<0.f)
+		{
+			APlayerController* controllerPC =Cast<APlayerController>(GetController());
+			DisableInput(controllerPC);
+
+		}
 
 	}
 }
@@ -115,6 +127,10 @@ void ASCharacter::PrimaryAttack()
 {
 
 	PlayAnimMontage(AttackAnim);
+
+	UGameplayStatics::SpawnEmitterAttached(ThrowMagicProEffect,GetMesh(), TEXT("Muzzle_01"));
+	UGameplayStatics::PlayWorldCameraShake(this, CamerShake,FVector(0.f),2.f,10.f);
+	
 	GetWorldTimerManager().SetTimer(TimeHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_Elapsed, 0.2f);
 	// recallBackFunction: PrimaryAttack_Elapsed
 }

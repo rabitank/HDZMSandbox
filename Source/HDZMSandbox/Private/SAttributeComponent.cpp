@@ -3,11 +3,14 @@
 
 #include "SAttributeComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Math/UnrealMathUtility.h"
 
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 {
-	Health = 100;
+
+	HealthMax = 100;
+	Health = HealthMax;
 	// ...
 }
 
@@ -15,7 +18,7 @@ USAttributeComponent::USAttributeComponent()
 
 bool USAttributeComponent::ApplyHealthChangeDelta(float delta)
 {
-	Health += delta;
+	Health = FMath::Clamp(Health+delta, 0.f, HealthMax);
 	DrawDebugString(GetWorld(), GetOwner()->GetActorLocation(),FString::Printf(TEXT("delta health %f, curent healty: %f"), delta, Health),NULL,FColor::Red,2.f);
 	
 	//broadcast what. where the dispatchers' eventInformations from.

@@ -61,8 +61,6 @@ void ASProjectileBase::Explode_Implementation()
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeParticle, GetActorLocation(), GetActorRotation());
 		}
 		Destroy();
-
-
 	}
 }
 

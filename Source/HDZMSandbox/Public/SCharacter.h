@@ -25,7 +25,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	class UAnimMontage* AttackAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")
+	class UParticleSystem* ThrowMagicProEffect;
 	
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<class UCameraShakeBase> CamerShake;
+
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	TSubclassOf<AActor> DashPorClass;
 
@@ -58,6 +64,8 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	class USAttributeComponent* ComSAttribute;
+
+
 
 	UFUNCTION()
 	void OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta);
