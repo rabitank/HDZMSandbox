@@ -32,10 +32,11 @@ void ASHealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 			return;
 		}
 
-		comUSA->ApplyHealthChangeDelta(20.f);
+		comUSA->ApplyHealthChangeDelta(20.f,this);
 		SetActorHiddenInGame(true);
 		ComMesh->SetActive(false);
 		GetWorldTimerManager().SetTimer(TimerHandle_ReInteractable, [this]() {SetActorHiddenInGame(false); ComMesh->SetActive(true); }, 10.f, false);
+	
 	}
 
 

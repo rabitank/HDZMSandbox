@@ -43,12 +43,28 @@ public:
 	FOnHealthChanged OnHealthChanged;
 
 	UFUNCTION(BlueprintCallable)
-	bool ApplyHealthChangeDelta(float delta);
+	bool ApplyHealthChangeDelta(float delta, AActor* Instigator = nullptr);
+	
+	UFUNCTION(BlueprintCallable)
+	float GetMaxHealth();
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive();
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsLowHealth();
 
 	UFUNCTION()
-		inline	bool IsMaxHealth() { return Health == HealthMax; }
+	inline	bool IsMaxHealth() { return Health == HealthMax; }
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Attribute")
+	static USAttributeComponent* GetAttributes(AActor* formActor) ;
+	
+	//DisplayName is name in bp
+	UFUNCTION(BlueprintCallable, Category = "Attribute", meta = (DisplayName = "IsAlive"))
+	static bool IsActorAlive(AActor* queryActor) ;
+
 
 };

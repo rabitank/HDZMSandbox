@@ -16,14 +16,29 @@ public:
 	ASAICharacter();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UFUNCTION()
+	void SetTargetActor(AActor* target);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class UPawnSensingComponent* ComPawnSense;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		class USAttributeComponent* ComSAttribute;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Effects")
+	FName HitTimeParametersName;
+
+
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta);
+
+
+	virtual void PostInitializeComponents() override;
+
+	UFUNCTION()
+		void OnSeePawn(APawn* Pawn);
+
 
 };

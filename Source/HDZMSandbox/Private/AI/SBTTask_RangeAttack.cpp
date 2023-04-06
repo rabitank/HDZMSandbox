@@ -5,6 +5,12 @@
 #include "AIController.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "SAttributeComponent.h"
+
+USBTTask_RangeAttack::USBTTask_RangeAttack()
+{
+	MaxBulletSpread = 2.f;
+}
 
 EBTNodeResult::Type USBTTask_RangeAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
@@ -19,7 +25,7 @@ EBTNodeResult::Type USBTTask_RangeAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 		{
 			return EBTNodeResult::Failed; //no instanced pawn,failed;
 		}
-
+			
 		//Attack?
 		FVector MuzzleLocation = myPawn->GetMesh()->GetSocketLocation("Muzzle_01");
 			
@@ -29,18 +35,26 @@ EBTNodeResult::Type USBTTask_RangeAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 			return EBTNodeResult::Failed;
 		}
 		
+		if (!USAttributeComponent::IsActorAlive(targetActor))
+		{
+			return EBTNodeResult::Failed;
+		}
 		FVector direction = targetActor->GetActorLocation() - MuzzleLocation;
 		FRotator MuzzleRotation = direction.Rotation();
+		MuzzleRotation.Pitch+= FMath::RandRange(-0.f, MaxBulletSpread);
+		MuzzleRotation.Yaw+= FMath::RandRange(-MaxBulletSpread, MaxBulletSpread);
+
 
 		FActorSpawnParameters spawnParams;
 		spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		spawnParams.Instigator = myPawn;
 
-		AActor* spawnActor = GetWorld()->SpawnActor<AActor>(ProjectileClass,MuzzleLocation,MuzzleRotation,spawnParams);
-		
+		AActor* spawnActor = GetWorld()->SpawnActor<AActor>(ProjectileClass, MuzzleLocation, MuzzleRotation, spawnParams);
+
 		return spawnActor ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 
 	}
 	return EBTNodeResult::Failed;
 
 }
+

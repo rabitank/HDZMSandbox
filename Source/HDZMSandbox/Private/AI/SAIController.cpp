@@ -5,18 +5,23 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+
+
+
 void ASAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if(ensureMsgf(BehaviorTree,TEXT("BahaviorTree is nullptr, pls assign BehaviorTree in bp")))
 	RunBehaviorTree(BehaviorTree);
 
-	auto pawnPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (pawnPlayer)
-	{
-		this->GetBlackboardComponent()->SetValueAsVector("MoveToLocation",pawnPlayer->GetActorLocation());
-		GetBlackboardComponent()->SetValueAsObject("TargetActor", pawnPlayer);
-	}
-
+// 	auto pawnPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+// 	if (pawnPlayer)
+// 	{
+// 		GetBlackboardComponent()->SetValueAsObject("TargetActor", pawnPlayer);
+// 	}
+// 
 
 }
+
+

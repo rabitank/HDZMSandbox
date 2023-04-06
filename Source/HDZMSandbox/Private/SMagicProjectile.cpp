@@ -29,7 +29,7 @@ void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
 		USAttributeComponent* comAttribute =(USAttributeComponent*) OtherActor->GetComponentByClass(USAttributeComponent::StaticClass());
 		if (comAttribute)
 		{
-			comAttribute->ApplyHealthChangeDelta(DamageAmount);
+			comAttribute->ApplyHealthChangeDelta(DamageAmount,GetInstigator());
 			Destroy();
 		}
 	}

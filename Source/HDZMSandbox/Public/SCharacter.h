@@ -17,6 +17,12 @@ class HDZMSANDBOX_API ASCharacter : public ACharacter
 
 		//you can directly change the macro of GENERATED_BODY in class.generated.h , so to change the line it should be.
 protected:
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HandSocketName;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HitTimeParametersName;
+
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> MagicProjectile;
 	
@@ -30,7 +36,7 @@ protected:
 	class UParticleSystem* ThrowMagicProEffect;
 	
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<class UCameraShakeBase> CamerShake;
+	TSubclassOf<UCameraShakeBase> CamerShake;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	TSubclassOf<AActor> DashPorClass;

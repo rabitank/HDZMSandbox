@@ -27,5 +27,8 @@ public:
 	//BlueprintNativeEvent:you can imp interface in c++ and bp;
 	//if inplement bpfunction will override cpp func. but you can call parent Interact to call cpp func
 
+	//write implementation:
+	//1. inherit interface
+	//2. override functionName_Implementation();
 
 };
