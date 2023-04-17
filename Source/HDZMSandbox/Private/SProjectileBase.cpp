@@ -34,6 +34,9 @@ ASProjectileBase::ASProjectileBase()
 
 	ComEffectParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SProComParticleSystem"));
 	ComEffectParticle->SetupAttachment(RootComponent);
+
+	bReplicates =true;
+
 }
 
 // Called when the game starts or when spawned

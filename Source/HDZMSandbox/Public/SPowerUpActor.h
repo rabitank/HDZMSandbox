@@ -15,7 +15,7 @@ class HDZMSANDBOX_API ASPowerUpActor : public AActor, public ISGamePlayInterface
 public:	
 	// Sets default values for this actor's properties
 /// <summary>
-/// @diescribtion: 如果有机会再说把,反正我健康药水已经写好了 T_T
+/// @diescribtion: 如果有机会再说把,反正我健康药水已经写好了 T_T -> 没事 已经改了
 /// </summary>
 	ASPowerUpActor();
 
@@ -35,6 +35,9 @@ protected:
 	
 	void SetPowerupState(bool Pstate);
 	void HiddenAndCooldownPowerup();
+	
+	UFUNCTION(NetMulticast,Reliable)
+	void MulticastHiddenAndCooldownPowerup();
 
 	UFUNCTION()
 	void ShowPowerup();

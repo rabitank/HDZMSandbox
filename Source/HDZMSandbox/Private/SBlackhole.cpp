@@ -15,7 +15,6 @@ ASBlackhole::ASBlackhole()
 	PrimaryActorTick.bCanEverTick = true;
 
 
-
 	//collision APi etc:
 	//ComSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	//ComSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);

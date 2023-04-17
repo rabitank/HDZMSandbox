@@ -4,10 +4,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SGamePlayInterface.h"
+#include "SPowerUpActor.h"
 #include "SHealthPotion.generated.h"
 
 UCLASS()
-class HDZMSANDBOX_API ASHealthPotion : public AActor , public ISGamePlayInterface
+class HDZMSANDBOX_API ASHealthPotion : public ASPowerUpActor
 {
 	GENERATED_BODY()
 	
@@ -23,13 +24,13 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* ComMesh;
-private:
-
-	FTimerHandle TimerHandle_ReInteractable;
 
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 CostCredits;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float AddHealth;
+
 
 };

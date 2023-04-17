@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SProjectileBase.h"
+#include "GameplayTagContainer.h"
 #include "SMagicProjectile.generated.h"
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -29,6 +30,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UAudioComponent* ComAudio;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
+	FGameplayTag ParryTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effect")
+	TSubclassOf<class USActionEffect> BurningEffectClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	class USoundBase* ImpactAudio;

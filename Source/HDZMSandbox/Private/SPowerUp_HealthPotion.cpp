@@ -3,6 +3,7 @@
 
 #include "SHealthPotion.h"
 #include <SAttributeComponent.h>
+#include "SPlayerState.h"
 
 // Sets default values
 ASHealthPotion::ASHealthPotion()
@@ -12,6 +13,11 @@ ASHealthPotion::ASHealthPotion()
 	
 	ComMesh = CreateDefaultSubobject<UStaticMeshComponent>("SHeaComMesh");
 	RootComponent = ComMesh;
+
+	CostCredits = 5.f;
+	
+	AddHealth = 20.f;
+
 
 }
 
@@ -31,21 +37,18 @@ void ASHealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 		{
 			return;
 		}
-
-		comUSA->ApplyHealthChangeDelta(20.f,this);
-		SetActorHiddenInGame(true);
-		ComMesh->SetActive(false);
-		GetWorldTimerManager().SetTimer(TimerHandle_ReInteractable, [this]() {SetActorHiddenInGame(false); ComMesh->SetActive(true); }, 10.f, false);
-	
+		ASPlayerState* state = Cast<ASPlayerState>(InstigatorPawn->GetPlayerState());
+		if (ensure(state))
+		{
+			if (state->RemoveCredit(CostCredits) && comUSA->ApplyHealthChangeDelta(AddHealth, this))
+			{
+				HiddenAndCooldownPowerup();
+			}
+		}
+		return;
 	}
 
-
 }
 
-// Called every frame
-void ASHealthPotion::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 
-}
 

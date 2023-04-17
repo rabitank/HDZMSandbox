@@ -17,47 +17,23 @@ class HDZMSANDBOX_API ASCharacter : public ACharacter
 
 		//you can directly change the macro of GENERATED_BODY in class.generated.h , so to change the line it should be.
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName HandSocketName;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName HitTimeParametersName;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> MagicProjectile;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> BlackholeClass;
+	// override the  eyetrace:GetActorEyesViewPoint() method
+	virtual FVector GetPawnViewLocation() const override;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	class UAnimMontage* AttackAnim;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")
-	class UParticleSystem* ThrowMagicProEffect;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<UCameraShakeBase> CamerShake;
-
-	UPROPERTY(EditAnywhere, Category = "Skill")
-	TSubclassOf<AActor> DashPorClass;
-
-	UPROPERTY(EditAnywhere, Category = "Skill")
-	class UAnimMontage* DashAnim;
-	
-	UPROPERTY(EditAnywhere, Category = "Skill")
-	float DashDistance;
-
-	
-	FTimerHandle TimeHandle_PrimaryAttack;
-	FTimerHandle TimeHandle_Dash;
 
 
 public:
 	// Sets default values for this character's properties
 	ASCharacter();
-
-
 protected:
+
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+		FName HitTimeParametersName;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+		TSubclassOf<UCameraShakeBase> CamerShakeDamaged;
 
 	UPROPERTY(VisibleDefaultsOnly)
 	USpringArmComponent* ComSpringArm;
@@ -68,9 +44,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USInteractionComponent* ComSInteraction;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class USActionComponent* ComActions;
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	class USAttributeComponent* ComSAttribute;
-
 
 
 	UFUNCTION()
@@ -85,24 +63,29 @@ private:
 	
 	void PrimaryInteraction();
 	void PrimaryAttack();
-	void PrimaryAttack_Elapsed();
 
 	void BlackholeAttack();
 
 	void Dash();
-	void Dash_Elapsed();
 
-	void SpawnProjectile(TSubclassOf<AActor> projectileType );
+	//Sprint:rush? Excute by ComAction
+	void SprintStart();
+	void SprintStop();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+
+	//Exec: cmd funciton/command 
+	//for debug and cheat
+	UFUNCTION(Exec)
+		void HealSelf(float amount=100.f);
+
 
 };

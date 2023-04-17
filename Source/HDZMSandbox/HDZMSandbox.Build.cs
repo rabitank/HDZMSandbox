@@ -8,7 +8,7 @@ public class HDZMSandbox : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "AIModule", "InputCore","GameplayTasks" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "AIModule", "InputCore","GameplayTasks","UMG","GameplayTags"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

@@ -2,10 +2,13 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Delegates/DelegateCombinations.h"
 #include "SAttributeComponent.generated.h"
 
 //it defferent with DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TParams声明动态多播稀疏代理  //声明动态多播代理, 你自己的代理签
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnHealthChanged,USAttributeComponent*,owningComp,AActor*,instigatorActor,float,newHealth, float ,delta);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnHealthChanged,USAttributeComponent*,owningComp,AActor*,instigatorActor,float,newHealth, float ,delta);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChanged,class USAttributeComponent*,owningComp,AActor*,instigatorActor,float,newAttribute, float ,delta);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HDZMSANDBOX_API USAttributeComponent : public UActorComponent
@@ -28,25 +31,58 @@ protected:
 
 	//maybe need 0_<
 
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Attributes")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Replicated,Category="Attributes")
 	float Health;
 	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Attributes")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Replicated,Category="Attributes")
 	float HealthMax;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Replicated,Category="Attributes")
+	float Rage;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated,Category="Attributes")
+	float RageMax;
+
+	
+
+
 
 	//healthMax,Stamina,Strength
 	//Stamina:the physical and/or mental strength to do something that might be difficult and will take a long time
 
+	UFUNCTION(NetMulticast, Reliable)
+		void MultiCastOnHealthChanged(USAttributeComponent* owncomp, AActor* Instigator, float newHealth, float actualDelta);
+	
+	UFUNCTION(NetMulticast, Reliable)
+		void MultiCastOnRageChanged(USAttributeComponent* owncomp, AActor* Instigator, float newRage, float actualDelta);
+
 
 public:
 	UPROPERTY(BlueprintAssignable)
-	FOnHealthChanged OnHealthChanged;
+	FOnAttributeChanged OnHealthChanged;
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChanged OnRageChanged;
 
 	UFUNCTION(BlueprintCallable)
 	bool ApplyHealthChangeDelta(float delta, AActor* Instigator = nullptr);
 	
 	UFUNCTION(BlueprintCallable)
+	bool ApplyRageChangeDelta(float delta, AActor* Instigator = nullptr);
+	
+
+	UFUNCTION(BlueprintCallable)
+	bool Kill(AActor* Instigator);
+	
+
+	UFUNCTION(BlueprintCallable)
 	float GetMaxHealth();
+	
+	UFUNCTION(BlueprintCallable)
+		float GetMaxRage() { return RageMax; };
+	
+	UFUNCTION(BlueprintCallable)
+		float GetRage() { return Rage; };
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive();
@@ -56,6 +92,9 @@ public:
 
 	UFUNCTION()
 	inline	bool IsMaxHealth() { return Health == HealthMax; }
+	
+	UFUNCTION()
+	inline	bool IsMaxRage() { return Rage == RageMax; }
 
 public:
 

@@ -8,6 +8,11 @@
 #include "DrawDebugHelpers.h"
 #include "SAttributeComponent.h"
 #include "BrainComponent.h"
+#include "SWorldUserWidget.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "SActionComponent.h"
 
 // Sets default values
 ASAICharacter::ASAICharacter()
@@ -17,13 +22,18 @@ ASAICharacter::ASAICharacter()
 
 	ComPawnSense = CreateDefaultSubobject<UPawnSensingComponent>("SAICComPawnSense");
 	ComSAttribute = CreateDefaultSubobject<USAttributeComponent>("SAICComSAttribute");
-	
+	ComSAction = CreateDefaultSubobject<USActionComponent>("SAICComSAction");
+
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	HitTimeParametersName = TEXT("HitTime");
-}
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	// now magicPorjecitle exploed is by code in its onoverlap();
 
+	HitTimeParametersName = TEXT("HitTime");
+	TargetActorKey = "TargetActor";
+}
 
 void ASAICharacter::OnHealthChanged_Implementation(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta)
 {
@@ -40,6 +50,24 @@ void ASAICharacter::OnHealthChanged_Implementation(USAttributeComponent* owningC
 
 		}
 
+		if (ActiveHealthBar == nullptr)
+		{
+			//5 kinds UO is acceptable as owning
+			//	UWidget 
+			//	UWidgetTree 
+			//	APlayerController
+			//	UGameInstance 
+			//	UWorld 
+			ActiveHealthBar =  CreateWidget<USWorldUserWidget>(GetWorld() ,AIHealthWidgetClass);
+			if (ActiveHealthBar)
+			{
+				ActiveHealthBar->AttachedActor = this;
+				ActiveHealthBar->AddToViewport();
+			}
+
+		}
+
+		//died
 		if (newHealth <= 0.f)
 		{
 
@@ -52,10 +80,16 @@ void ASAICharacter::OnHealthChanged_Implementation(USAttributeComponent* owningC
 				aiContr->GetBrainComponent()->StopLogic("character been killed ");
 
 			}
+
 			//ragdol
 			GetMesh()->SetAllBodiesSimulatePhysics(true);
 			GetMesh()->SetCollisionProfileName("Ragdoll");
 
+			//close old collision
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetCharacterMovement()->DisableMovement();
+
+			
 			//disapeare
 			SetLifeSpan(10.f);
 		}
@@ -69,10 +103,22 @@ void ASAICharacter::SetTargetActor(AActor* target)
 	if (aIcontroller)
 	{
 		UBlackboardComponent* comBlackBoard = aIcontroller->GetBlackboardComponent();
-		comBlackBoard->SetValueAsObject("TargetActor", target);
+		comBlackBoard->SetValueAsObject(TargetActorKey, target);
 		//DrawDebugString(GetWorld(), GetActorLocation(), "Find Target!", nullptr, FColor::Yellow, 2.f);
 	}
 
+}
+
+AActor* ASAICharacter::GetTargetActor()
+{
+	AAIController* aIcontroller = Cast<AAIController>(GetController());
+
+	if (aIcontroller)
+	{
+		UBlackboardComponent* comBlackBoard = aIcontroller->GetBlackboardComponent();
+		return Cast<AActor>(comBlackBoard->GetValueAsObject(TargetActorKey));
+	}
+	return nullptr;
 }
 
 void ASAICharacter::PostInitializeComponents()
@@ -82,10 +128,31 @@ void ASAICharacter::PostInitializeComponents()
 	ComSAttribute->OnHealthChanged.AddDynamic(this, &ASAICharacter::OnHealthChanged);
 }
 
+
+void ASAICharacter::MultiCastCreateFindWidget_Implementation()
+{
+	USWorldUserWidget* findWidget = CreateWidget<USWorldUserWidget>(GetWorld(), AIFindPlayerWidgetClass);
+	if (ensureMsgf(findWidget, TEXT("AIFindPlayerWidgetClass shoulb be subclass of SworldWidget")))
+	{
+		findWidget->AttachedActor = this;
+		//10: z buffer value-> depth in render
+		findWidget->AddToViewport(10);
+	}
+}
+
+
 //the Pawn : what he saw;
 void ASAICharacter::OnSeePawn(APawn* Pawn)
 {
+	if (GetTargetActor() != Pawn)
+	{
+		SetTargetActor(Pawn);
 
-	SetTargetActor(Pawn);
+		//PawnSenseComponent don't replicate,OnSeePawn only run in server
+		//so don't need Authority check
+		MultiCastCreateFindWidget();
+	}
+
+
 }
 

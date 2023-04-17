@@ -12,6 +12,14 @@
 #include <SAttributeComponent.h>
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "SActionComponent.h"
+#include "../HDZMSandbox.h"
+#include "GameFramework/Controller.h"
+#include "SPlayerState.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/PrimitiveComponent.h"
+
+
 
 
 // Sets default values
@@ -32,35 +40,58 @@ ASCharacter::ASCharacter()
 
 	ComSAttribute = CreateDefaultSubobject<USAttributeComponent>("SChaComSAttribute");
 
+	ComSInteraction = CreateDefaultSubobject<USInteractionComponent>("SChaComSInteraction");
+
+	ComActions = CreateDefaultSubobject<USActionComponent>("SChaComAction");
+
+
 	//make char rotate CharmainDirection  to movement direction
 	GetCharacterMovement()->bOrientRotationToMovement = true; 
-
-	ComSInteraction = CreateDefaultSubobject<USInteractionComponent>("SChaComSInteraction");
 
 	//it used to be set true in default;
 	bUseControllerRotationYaw = false; 
 
-	DashDistance = 3.f;
+	//DashDistance = 3.f;
 
-	HandSocketName = TEXT("Muzzle_01");
 	HitTimeParametersName = TEXT("HitTime");
 
 }
 
+FVector ASCharacter::GetPawnViewLocation() const
+{
+	return ComCamera->GetComponentLocation();
+}
+
 void ASCharacter::OnHealthChanged(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta)
 {
+	APlayerController* plyarCont =Cast<APlayerController>(GetController());
+	if (IsLocallyControlled())
+		plyarCont->ClientPlayCameraShake(CamerShakeDamaged);
+
+
 	if (delta < 0.f)
 	{
 		GetMesh()->SetScalarParameterValueOnMaterials(HitTimeParametersName, GetWorld()->GetTimeSeconds());
-		GetMesh()->SetScalarParameterValueOnMaterials("HitSpeed", 3.f);
-		GetMesh()->SetVectorParameterValueOnMaterials("FlashColor", FVector(0.9f, 0.f, 0.5f));
-		//if die , can't control	
+		
+		//damage cause rage
+		float RageDelta = FMath::Abs(delta);
+		ComSAttribute->ApplyRageChangeDelta(RageDelta,instigatorActor );
+
+		//if die , can't control
 		if (newHealth <= 0.f )
 		{
 			APlayerController* controllerPC =Cast<APlayerController>(GetController());
+			//close old collision
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetCharacterMovement()->DisableMovement();
+
+
+			//disapeare
+			SetLifeSpan(10.f);
+			
 			DisableInput(controllerPC);
 		}
-
+		// Rage added equal to damage received (Abs to turn into positive rage number)
 	}
 }
 
@@ -110,103 +141,45 @@ void ASCharacter::PrimaryInteraction()
 
 void ASCharacter::Dash()
 {
-	PlayAnimMontage(DashAnim);
-	GetWorldTimerManager().SetTimer(TimeHandle_Dash,this,&ASCharacter::Dash_Elapsed,0.2f);
+	ComActions->StartActionByName(this,"Dash");
 }
 
-void ASCharacter::Dash_Elapsed()
+void ASCharacter::SprintStart()
 {
-//then The DashPorClass will make the instigator move to it
-	SpawnProjectile(DashPorClass);
+	ComActions->StartActionByName(this,"Sprint");
 }
+
+void ASCharacter::SprintStop()
+{
+	ComActions->StopActionByName(this,"Sprint");
+}
+
 void ASCharacter::PrimaryAttack()
 {
 
-	PlayAnimMontage(AttackAnim);
-
-	UGameplayStatics::SpawnEmitterAttached(ThrowMagicProEffect,GetMesh(), HandSocketName,FVector::ZeroVector,FRotator::ZeroRotator,EAttachLocation::SnapToTarget);
-	//UGameplayStatics::PlayWorldCameraShake(this, CamerShake,GetActorLocation(),20.f,100.f,10.f);
-	Cast<APlayerController>(GetController())->ClientPlayCameraShake(CamerShake);
-	
-	GetWorldTimerManager().SetTimer(TimeHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_Elapsed, 0.2f);
-	// recallBackFunction: PrimaryAttack_Elapsed
-}
-
-void ASCharacter::PrimaryAttack_Elapsed()
-{
-	SpawnProjectile(MagicProjectile);
+	ComActions->StartActionByName(this, "PrimaryAttack");
 
 }
 
 void ASCharacter::BlackholeAttack()
 {
-	SpawnProjectile(BlackholeClass);
-}
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::White, "BlackholeAttack: Part On Character");
 
-void ASCharacter::SpawnProjectile(TSubclassOf<AActor> projectileType)
-{
-	//ensure:
-	//assert in ue? or just a temp stop, you can continue
-	//and it wouldnot appare in release Version
-	//ensure: stop once if cant pass
-	//ensureAlways:always stop if cant pass
-	if (ensureAlways(MagicProjectile))
-	{ 
-		FTransform SMagTM;
-
-		FVector handLocation = GetMesh()->GetSocketLocation(TEXT("Muzzle_01"));
-
-		FCollisionShape shape;
-		shape.SetSphere(20.f);
-
-		FCollisionQueryParams params;
-		params.AddIgnoredActor(this);
-		FCollisionObjectQueryParams queryParams(FCollisionObjectQueryParams::AllDynamicObjects);
-		queryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		queryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		queryParams.AddObjectTypesToQuery(ECC_Pawn);
-
-		float radians = 50000.f;
-		FVector start = ComCamera->GetComponentLocation() + ComCamera->GetComponentRotation().Vector()*50.f;
-		FVector end = start + ComCamera->GetComponentRotation().Vector() * radians;
-		
-
-		FHitResult hitResult;
-
-		bool isSuccessed = GetWorld()->SweepSingleByObjectType(hitResult, start, end,FQuat::Identity, queryParams,shape,params);
-		if (isSuccessed)
-		{
-			end = hitResult.ImpactPoint;
-
-		}
-
-		FRotator projectileRot = UKismetMathLibrary::MakeRotFromX(end - handLocation);
-		SMagTM = FTransform(projectileRot, handLocation);
-		DrawDebugSphere(GetWorld(), hitResult.Location, 30.f, 12, FColor::Yellow, false, 2.f);
-		
-
-		FActorSpawnParameters SMagspawnPars;
-		SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SMagspawnPars.Instigator = this;
-
-		GetWorld()->SpawnActor<AActor>(projectileType, SMagTM, SMagspawnPars);
-	}
+	ComActions->StartActionByName(this, "BlackHole");
 }
 
 
-
-
-// Called when the game starts or when spawned
-void ASCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
 
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	ASPlayerState* ps = Cast<ASPlayerState>(GetPlayerState());
+	if (ps)
+	{
+		FString msg  =  FString::Printf(TEXT("Player %s credits: %d"),*GetNameSafe(this),ps->GetCredit());
+		LogOnScreen(this, msg, FColor::Blue, 0.f);
+	}
 
 }
 
@@ -229,11 +202,19 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 	//you cant directly call componentMethod;
 	PlayerInputComponent->BindAction("PrimaryInteract",IE_Pressed, this, &ASCharacter::PrimaryInteraction);
-
 	//bind E
 	PlayerInputComponent->BindAction("BlackholeAttack",IE_Pressed, this, &ASCharacter::BlackholeAttack);
 
 	PlayerInputComponent->BindAction("Dash",IE_Pressed, this, &ASCharacter::Dash);
 	
+	PlayerInputComponent->BindAction("Sprint",IE_Pressed, this, &ASCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint",IE_Released, this, &ASCharacter::SprintStop);
+
+	
+}
+
+void ASCharacter::HealSelf(float amount /* = 100*/)
+{
+	ComSAttribute->ApplyHealthChangeDelta(amount,this);
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/EngineTypes.h"
 #include "SInteractionComponent.generated.h"
 
 
@@ -20,8 +21,31 @@ public:
 	void PrimaryInteraction();
 
 protected:
+
+	UFUNCTION(Server, Reliable)
+	void ServerInteraction(AActor* inActor);
+
+	UPROPERTY()
+		AActor* FocusActor;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class USWorldUserWidget> DefaultWidgetClass;
+	UPROPERTY()
+	class USWorldUserWidget*  DefaultWidgetInstance;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+		float TraceRadius;
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+		float TraceLength;
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+	TEnumAsByte<ECollisionChannel> collisionChannel;
+
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+
+	void FindBestInteractionActor();
 
 public:	
 	// Called every frame

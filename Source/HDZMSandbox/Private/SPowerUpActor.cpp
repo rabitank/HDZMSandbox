@@ -15,6 +15,8 @@ ASPowerUpActor::ASPowerUpActor()
 	ComSphere->SetSphereRadius(20.f);
 	CoolDownTime = 10.f;
 
+	bReplicates = true;
+
 }
 
 // Called when the game starts or when spawned
@@ -44,6 +46,16 @@ void ASPowerUpActor::ShowPowerup()
 }
 
 void ASPowerUpActor::HiddenAndCooldownPowerup()
+{
+	//OnServer?
+	if (HasAuthority())
+	{
+		MulticastHiddenAndCooldownPowerup();
+	}
+
+}
+
+void ASPowerUpActor::MulticastHiddenAndCooldownPowerup_Implementation()
 {
 
 	SetPowerupState(false);

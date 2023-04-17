@@ -20,7 +20,13 @@ public:
 	ASItemChest();
 
 protected:
-	// Called when the game starts or when spawned
+
+
+	UPROPERTY(ReplicatedUsing = "OnRep_IsOpended", Replicated)
+		bool bIsLipopened;
+	UFUNCTION()
+		void OnRep_IsOpended();
+
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
