@@ -23,9 +23,16 @@ class HDZMSANDBOX_API ISGamePlayInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	void OnActorLoaded();
+	
+
+
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
 	void Interact(APawn* InstigatorPawn);
 	//BlueprintNativeEvent:you can imp interface in c++ and bp;
 	//if inplement bpfunction will override cpp func. but you can call parent Interact to call cpp func
+
+
 
 	//write implementation:
 	//1. inherit interface

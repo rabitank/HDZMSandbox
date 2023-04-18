@@ -15,6 +15,8 @@ class HDZMSANDBOX_API ASGameModeBase : public AGameModeBase
 
 protected:
 
+	FString SlotName;
+
 	UPROPERTY(EditDefaultsOnly, Category = "PlayerState | Credits")
 		int32 CreditsPerKilled;
 	UPROPERTY(EditDefaultsOnly, Category = "PowerUp")
@@ -27,8 +29,12 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "PowerUp")
 	class UEnvQuery* SpawnPowerUpQuery;
+	
+	
+	UPROPERTY(EditDefaultsOnly, Category = "SaveGame")
+	class USSaveGame* CurrentSaveGame;
 
-
+	
 	
 
 	FTimerHandle TimerHandle_BotSpawn;
@@ -75,6 +81,25 @@ public:
 
 	UFUNCTION()
 		void RespawnPlayerDelayElaps(AController* controller);
+
+
+	/**
+	 * Initialize the game.
+	 * The GameMode's InitGame() event is called before any other functions (including PreInitializeComponents() )
+	 * and is used by the GameMode to initialize parameters and spawn its helper classes.
+	 * @warning: this is called before actors' PreInitializeComponents.
+	 */
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	
+
+	/** Signals that a player is ready to enter the game, which may start it up */
+	//UFUNCTION(BlueprintNativeEvent, Category = Game)
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
+	UFUNCTION(BlueprintCallable)
+		void WriteSaveGame();
+	UFUNCTION()
+		void LoadSaveGame();
 
 	virtual void OnActorKilled(AActor* VictimActor, AActor* Killer);
 

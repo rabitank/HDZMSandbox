@@ -12,6 +12,10 @@
 #include "SPlayerState.h"
 #include "SPowerUpActor.h"
 #include "GameFramework/GameSession.h"
+#include "Kismet/GameplayStatics.h"
+#include <SSaveGame.h>
+#include "GameFramework/GameStateBase.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 
 //控制台变量
@@ -30,6 +34,8 @@ ASGameModeBase::ASGameModeBase()
 	PlayerStateClass = ASPlayerState::StaticClass();
 
 	bReplicates = true;
+
+	SlotName = "SaveGame01";
 
 }
 
@@ -193,6 +199,29 @@ void ASGameModeBase::RespawnPlayerDelayElaps(AController* controller)
 	}
 }
 
+
+
+void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	//as soon as possible to make currentSaveGame readandwWritable to others
+	LoadSaveGame();
+}
+
+void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+		ASPlayerState* ps = Cast<ASPlayerState>(NewPlayer->GetPlayerState<ASPlayerState>());
+		if (ps)
+		{
+			ps->LoadPlayerState(CurrentSaveGame);
+			//single player
+		}
+
+}
+
 void ASGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 {
 	//if player been killed
@@ -228,5 +257,98 @@ void ASGameModeBase::ClearCredit()
 
 	ASPlayerState* ps = Cast<ASPlayerState>(GetWorld()->GetFirstPlayerController()->GetPawn()->GetPlayerState());
 	ps->RemoveCredit(ps->GetCredit());
+
+}
+
+void ASGameModeBase::WriteSaveGame()
+{
+	UE_LOG(LogTemp, Log, TEXT("Save Game"));
+	CurrentSaveGame->SaveActorDatas.Empty();
+
+	for (int i = 0; i < GameState->PlayerArray.Num(); i++)
+	{
+		ASPlayerState* ps = Cast<ASPlayerState>(GameState->PlayerArray[i]);
+		if (ps)
+		{
+			ps->SavePlayerState(CurrentSaveGame);
+
+			//single player
+			break;
+		}
+
+	};
+	
+	for (TActorIterator<AActor> it(GetWorld()); it; ++it)
+	{
+		if (it->Implements<USGamePlayInterface>())
+		{
+			FActorData actorData;
+			actorData.ActorName = GetNameSafe(*it);
+			actorData.ActorTransform = it->GetTransform();
+
+			FMemoryWriter fmw(actorData.ByteData);
+			FObjectAndNameAsStringProxyArchive Ar(fmw,true);
+
+			//make sure it only binary UP(SaveGame) variables into fmw binded Memory(ByteData);
+			Ar.ArIsSaveGame= true;
+			//"Re or Serialize" mode is decied by fmw
+			it->Serialize(Ar);
+				
+			CurrentSaveGame->SaveActorDatas.Add(actorData);
+		}
+	}
+
+	if (UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0))
+	{
+		return;
+	};
+
+	UE_LOG(LogTemp, Warning, TEXT("Save Game failed"));
+
+}
+
+void ASGameModeBase::LoadSaveGame()
+{
+	if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
+	{
+		CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+		if (CurrentSaveGame == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LoadGame failed"));
+		}
+		UE_LOG(LogTemp, Log, TEXT("LoadGame successed"));
+
+		for (TActorIterator<AActor> it(GetWorld()); it; ++it)
+		{
+			if (it->Implements<USGamePlayInterface>())
+			{
+				//@FixMe: low effects
+
+				for (auto saveData : CurrentSaveGame->SaveActorDatas)
+				{
+					if (saveData.ActorName == it->GetName())
+					{
+						it->SetActorTransform(saveData.ActorTransform);
+						FMemoryReader fmr(saveData.ByteData);
+						FObjectAndNameAsStringProxyArchive Ar(fmr, true);
+						Ar.ArIsSaveGame = true;
+						//reSerialize byteData to Variables;
+						it->Serialize(Ar);
+
+						ISGamePlayInterface::Execute_OnActorLoaded(*it);
+					}
+
+				};
+			}
+
+		}
+
+	}
+	else
+	{
+		CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::CreateSaveGameObject(USSaveGame::StaticClass()));
+		UE_LOG(LogTemp, Log, TEXT("Created SaveGame successed"));
+	}
+
 
 }

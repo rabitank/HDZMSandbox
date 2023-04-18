@@ -22,7 +22,7 @@ public:
 protected:
 
 
-	UPROPERTY(ReplicatedUsing = "OnRep_IsOpended", Replicated)
+	UPROPERTY(ReplicatedUsing = "OnRep_IsOpended", Replicated,SaveGame)
 		bool bIsLipopened;
 	UFUNCTION()
 		void OnRep_IsOpended();
@@ -35,8 +35,10 @@ protected:
 	class	UStaticMeshComponent* ComLidMesh;
 	//Lid: Gaizi 盖子	
 
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void OnActorLoaded_Implementation() override;
 };

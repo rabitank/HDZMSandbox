@@ -36,8 +36,16 @@ public:
 	UFUNCTION(BlueprintCallable,Category="Credit")
 	int32 GetCredit() const;
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+		void SavePlayerState(class USSaveGame* currentSave);
+	UFUNCTION()
+		void LoadPlayerState(class USSaveGame* currentSave);
+
+
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnCreditsChanged OnCreditsChanged ;
+
+
 
 	
 };

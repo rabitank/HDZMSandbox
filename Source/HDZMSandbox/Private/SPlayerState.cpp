@@ -4,6 +4,7 @@
 #include "SPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "../HDZMSandbox.h"
+#include "SSaveGame.h"
 
 ASPlayerState::ASPlayerState()
 {
@@ -49,10 +50,22 @@ int32 ASPlayerState::GetCredit() const
 	return Credit;
 }
 
+void ASPlayerState::SavePlayerState(class USSaveGame* currentSave)
+{
+	if(currentSave)
+	currentSave->Credit = Credit;
+}
+
+void ASPlayerState::LoadPlayerState(class USSaveGame* currentSave)
+{
+	if(currentSave)
+	Credit = currentSave->Credit;
+}
+
+
 void ASPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASPlayerState, Credit);
-
 }

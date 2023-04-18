@@ -48,6 +48,11 @@ void ASItemChest::Tick(float DeltaTime)
 
 }
 
+void ASItemChest::OnActorLoaded_Implementation()
+{
+	OnRep_IsOpended();
+}
+
 //生存时间内获得复制(需要同步)的属性, 必须提供实现(提供如何同步方法)
 void ASItemChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
