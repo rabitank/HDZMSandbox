@@ -3,11 +3,26 @@
 
 #include "SActionEffect.h"
 #include "../Public/SActionComponent.h"
+#include "GameFramework/GameStateBase.h"
 
 
 USActionEffect::USActionEffect()
 {
 	bIsAutoStart = true;
+}
+
+float USActionEffect::GetTimeRemaining()
+{
+	//get server world time;
+	AGameStateBase* gs = GetWorld()->GetGameState<AGameStateBase>();
+	if (gs)
+	{
+		float nowTime =gs->GetServerWorldTimeSeconds();
+		return Duration + StartedTime - nowTime;
+	}
+	return Duration;
+
+
 }
 
 void USActionEffect::StartAction_Implementation(AActor* Instigator)
@@ -28,6 +43,7 @@ void USActionEffect::StartAction_Implementation(AActor* Instigator)
 
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExcuteBuffer, dele, Period,true);
 	}
+
 }
 
 void USActionEffect::StopAction_Implementation(AActor* Instigator)

@@ -36,7 +36,12 @@ protected:
 	void ExcuteBufferEffect(AActor* Instigator);
 
 
+
 public:
+
+	UFUNCTION(BlueprintCallable)
+		float GetTimeRemaining();
+
 	USActionEffect();
 
 	virtual	void StartAction_Implementation(AActor* Instigator) override;

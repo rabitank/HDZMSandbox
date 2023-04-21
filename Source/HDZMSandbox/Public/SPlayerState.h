@@ -18,14 +18,18 @@ class HDZMSANDBOX_API ASPlayerState : public APlayerState
 	GENERATED_BODY()
 protected:
 
-	UPROPERTY(EditAnywhere,Replicated,Category = "Credit")
+
+	//OnRep_ will auto bind the old value if it has a param.
+	UPROPERTY(EditAnywhere,ReplicatedUsing = "OnRep_OnCreditsChanged", Category = "Credit")
 	int32 Credit;
+
+	//if use MultiCast , maybe shouldn't  pass ptr type para.
 
 public:
 	ASPlayerState();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastOnCreditsChanged(ASPlayerState* ps, int32 nweCredit, int32 delta);
+	UFUNCTION()
+	void OnRep_OnCreditsChanged(int32 oldCredit);
 
 	UFUNCTION(BlueprintCallable,Category="Credit")
 	void AddCredit(int32 delta);

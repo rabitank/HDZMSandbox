@@ -44,9 +44,16 @@ protected:
 	UFUNCTION()
 		void OnRep_ActionData();
 
+	UPROPERTY(Replicated)
+		float StartedTime;
+
 public:
 	void Initialize	(USActionComponent* NewActionComp);
 
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+		class UTexture2D* ActionIcon;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 		bool bIsAutoStart;

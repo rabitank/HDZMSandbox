@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
+#include "Delegates/DelegateCombinations.h"
 #include "SActionComponent.generated.h"
 
 class USAction;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActionStatedChanged, class USActionComponent*, ActionComp,USAction*, action);
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HDZMSANDBOX_API USActionComponent : public UActorComponent
@@ -52,6 +55,12 @@ public:
 	FGameplayTagContainer ActiveGameplayTags;
 
 
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStatedChanged OnActionStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStatedChanged OnActionStoped;
+
 protected:
 	//参考架构 view:GAS:https://www.bilibili.com/video/BV1zD4y1X77M
 	virtual void BeginPlay() override;
@@ -60,7 +69,7 @@ protected:
 	TArray<TSubclassOf<USAction>> DefaultActions;
 
 	//角色动作/能力库 
-	UPROPERTY(Replicated)
+	UPROPERTY( BlueprintReadOnly,Replicated)
 	TArray<USAction*> Actions;
 
 

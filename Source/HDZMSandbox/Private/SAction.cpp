@@ -13,7 +13,6 @@ void USAction::Initialize(USActionComponent* NewActionComp)
 	ActionComp = NewActionComp;
 }
 
-
 void USAction::StartAction_Implementation(AActor* Instigator)
 {
 	//GetNameSafe(UO* ) will get class FName number safely
@@ -27,6 +26,17 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 
 	RepActionData.bIsRunning = true;
 	RepActionData.Instigator = Instigator;
+
+	ComOwner->OnActionStarted.Broadcast(ComOwner,this);
+	
+	//only get time in server
+	if (GetOwningComponent()->GetOwnerRole() == ROLE_Authority)
+	{
+		StartedTime = GetWorld()->GetTimeSeconds();
+	}
+
+
+
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
@@ -44,6 +54,8 @@ void USAction::StopAction_Implementation(AActor* Instigator)
 
 	RepActionData.bIsRunning = false;
 	RepActionData.Instigator = Instigator;
+
+	ComOwner->OnActionStoped.Broadcast(ComOwner,this);
 
 }
 
@@ -121,6 +133,7 @@ void USAction::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(USAction, RepActionData);
+	DOREPLIFETIME(USAction, StartedTime);
 	DOREPLIFETIME(USAction, ActionComp);
 
 }

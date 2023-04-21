@@ -211,14 +211,14 @@ void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FS
 
 void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
+	//fixed; call before Super::HandleStartingNewPlayer. so loadbefore BeginplayingState();
+	ASPlayerState* ps = Cast<ASPlayerState>(NewPlayer->GetPlayerState<ASPlayerState>());
+	if (ps)
+	{
+		ps->LoadPlayerState(CurrentSaveGame);
+		//single player
+	}
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-
-		ASPlayerState* ps = Cast<ASPlayerState>(NewPlayer->GetPlayerState<ASPlayerState>());
-		if (ps)
-		{
-			ps->LoadPlayerState(CurrentSaveGame);
-			//single player
-		}
 
 }
 

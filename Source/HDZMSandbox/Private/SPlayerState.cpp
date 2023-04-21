@@ -12,10 +12,10 @@ ASPlayerState::ASPlayerState()
 	bReplicates = true;
 }
 
-void ASPlayerState::MulticastOnCreditsChanged_Implementation(ASPlayerState* ps, int32 newCredit, int32 delta)
+void ASPlayerState::OnRep_OnCreditsChanged(int32 oldCredit)
 {
-	LogOnScreen(ps, "Is changing Credtis ,and should Brodcast", FColor::Green);
-	OnCreditsChanged.Broadcast(this, newCredit, delta);
+	LogOnScreen(this, "Is changing Credtis ,and should Brodcast", FColor::Green);
+	OnCreditsChanged.Broadcast(this, Credit, Credit -  oldCredit);
 }
 
 void ASPlayerState::AddCredit(int32 delta)
@@ -27,7 +27,7 @@ void ASPlayerState::AddCredit(int32 delta)
 	Credit += delta;
 	if (HasAuthority())
 	{
-		MulticastOnCreditsChanged(this, Credit, delta);
+		OnCreditsChanged.Broadcast(this, Credit, delta);
 	}
 
 }
@@ -41,7 +41,7 @@ bool ASPlayerState::RemoveCredit(int32 delta)
 
 	Credit -= delta;
 	if(HasAuthority())
-		MulticastOnCreditsChanged(this, Credit, -delta);
+		OnCreditsChanged.Broadcast(this, Credit, delta);
 	return true;
 }
 
@@ -58,10 +58,13 @@ void ASPlayerState::SavePlayerState(class USSaveGame* currentSave)
 
 void ASPlayerState::LoadPlayerState(class USSaveGame* currentSave)
 {
-	if(currentSave)
-	Credit = currentSave->Credit;
-}
+	if (currentSave)
+	{
+		//Credit = currentSave->Credit;
+		AddCredit(currentSave->Credit);
+	};
 
+}
 
 void ASPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
