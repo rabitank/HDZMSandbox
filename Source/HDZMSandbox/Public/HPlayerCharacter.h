@@ -17,6 +17,16 @@ public:
 	AHPlayerCharacter();
 
 protected:
+	UPROPERTY(BlueprintReadWrite, Category = "Anim Control")
+		bool bCrouchButtonDown;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Anim Control")
+		bool bJumpButtonDown;
+
+	int64 RestoreEnergyKeyPressedTick =0;
+
+
+protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -29,23 +39,37 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UHAttributeComponent* ComAttribute;
 	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class UHEmitterComponent* ComEmitter;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class USphereComponent* ComSphereCollision;
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = "Bullet")
 		TSubclassOf<AHBulletBase> BulletClass;
 
 
-	UFUNCTION()
-		void PrimaryEmitt();
-
+protected:
 	void MoveRight(float val);
 	void MoveForward(float val);
+	void ChangeCore(float val);
 
+	void StartCrouch() { bCrouchButtonDown= true; };
+	void StopCrouch() { bCrouchButtonDown = false; };
+
+	void StartJump();
+	void StopJump();
+	void DispatchJumpData();
+	void PrimaryEmitt();
+
+	void OnRestoreEnergy();
+	void OnStartRestoreEnergy();
 
 
 public:	
 	// Called every fram
 	virtual void Tick(float DeltaTime) override;
-
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

@@ -37,6 +37,7 @@ public:
 	void ServerStopActionByName( AActor* Instigator , FName actionName);
 
 	
+
 	UFUNCTION(BlueprintCallable, Category = "Actions")
 	bool  StopActionByName(AActor* Instigator, FName actionName);
 	

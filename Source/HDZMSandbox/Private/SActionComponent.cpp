@@ -35,6 +35,7 @@ void USActionComponent::AddAction(AActor* Instigator,TSubclassOf<USAction> Actio
 			actionIns->StartAction(Instigator);
 		}
 	}
+
 }
 
 USAction* USActionComponent::GetAction(TSubclassOf<USAction> ActionClass)

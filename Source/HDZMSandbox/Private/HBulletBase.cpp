@@ -33,12 +33,13 @@ AHBulletBase::AHBulletBase()
 	ComMovement->bInitialVelocityInLocalSpace = true;
 	ComMovement->ProjectileGravityScale = 0.f;
 
+	ComMovement->bAutoActivate = true;
+
 	InitialSpeed = 8000.f;
 	ComMovement->InitialSpeed = InitialSpeed;
 	RecoilForce = 1000000.f;
 
-	DemandEnergy = 10.f;
-	CurrentContainEnergy = DemandEnergy;
+	CurrentContainEnergy = 10.f;
 	
 	LifeDuration = 10.f;
 	bCanFadeAway = false;

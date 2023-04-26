@@ -34,9 +34,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet")
 	float InitialSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet | Energy")
-	float DemandEnergy;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet | Energy")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bullet | Energy")
 	float CurrentContainEnergy;
 	
 	

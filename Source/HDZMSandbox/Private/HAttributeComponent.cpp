@@ -14,6 +14,10 @@ UHAttributeComponent::UHAttributeComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	EnergyMax = 100;
+	EnergyDangerou = 0.8 * EnergyMax;
+	Energy = EnergyDangerou;
 }
 
 
@@ -66,7 +70,7 @@ bool UHAttributeComponent::ApplyEnergyChangeDelta(AActor* Instigator, float delt
 		Energy = NewEnergy; 
 	}
 
-	actualDelta = NewEnergy - overMax;
+	actualDelta = NewEnergy - oldEnergy;
 	
 	DrawDebugString(GetWorld(), GetOwner()->GetActorLocation(),FString::Printf(TEXT("delta Energy %f, curent Energy: %f"), actualDelta, Energy),NULL,FColor::Red,2.f);
 
@@ -100,3 +104,22 @@ void UHAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	// ...
 }
 
+void UHAttributeComponent::RestoreEnergyToInitLevel()
+{
+	if (IsDangerouOrInit())
+		return;
+	ApplyEnergyChangeDelta(GetOwner(), EnergyDangerou - Energy);
+}
+
+
+UHAttributeComponent* UHAttributeComponent::GetAttribute(APawn* pawn)
+{
+	if (ensure(pawn))
+	{
+		UHAttributeComponent* attribute = Cast<UHAttributeComponent>(pawn->GetComponentByClass(UHAttributeComponent::StaticClass()));
+		if (attribute)
+			return attribute;
+	
+	}
+	return nullptr;
+}

@@ -6,6 +6,9 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../HDZMSandbox.h"
+#include "HAttributeComponent.h"
+#include "Components/SphereComponent.h"
+#include "HEmitterComponent.h"
 
 // Sets default values
 AHPlayerCharacter::AHPlayerCharacter()
@@ -43,6 +46,11 @@ AHPlayerCharacter::AHPlayerCharacter()
 
 	ComAttribute = CreateDefaultSubobject<UHAttributeComponent>("HPlaComAttribute");
 
+	ComEmitter = CreateDefaultSubobject<UHEmitterComponent>("HPlaComEmitter");
+
+	ComSphereCollision = CreateDefaultSubobject<USphereComponent>("HPlaComSphereCollision");
+	ComSphereCollision->SetupAttachment(GetRootComponent());
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
@@ -56,30 +64,61 @@ void AHPlayerCharacter::BeginPlay()
 	
 }
 
+void AHPlayerCharacter::OnRestoreEnergy()
+{
+
+	// make RestoreEnergy invalid / break this one Restore by set it 0 ;
+	if (RestoreEnergyKeyPressedTick == 0)
+		return;
+
+	//TicksPerSecond 10000000
+	float holdSeconds = (FDateTime::Now().GetTicks() - RestoreEnergyKeyPressedTick )/ 10000000.f;
+	// @fix: may need a little UI Animate
+
+	UE_LOG(LogTemp, Warning, TEXT("OnRestoreEnergy holdSeconds:%f"), holdSeconds);
+
+	if (holdSeconds > 2.5f)
+		ComAttribute->RestoreEnergyToInitLevel();
+
+}
+
+
+void AHPlayerCharacter::OnStartRestoreEnergy()
+{
+	LogOnScreen(this, "OnStartRestoreEnergy");
+
+	RestoreEnergyKeyPressedTick = FDateTime::Now().GetTicks();
+}
+
+void AHPlayerCharacter::ChangeCore(float val)
+{
+	if(val)
+		ComEmitter->SlideCore(val);
+
+}
+
+void AHPlayerCharacter::PrimaryEmitt()
+{
+	ComEmitter->EmitCurrentBullet(this);
+
+	RestoreEnergyKeyPressedTick = 0;
+}
 
 void AHPlayerCharacter::MoveRight(float val)
 {
 	FRotator controlRot = GetControlRotation();
 	controlRot.Roll = 0.f;
 	controlRot.Pitch = 0.f;
-	
+
 	//X means forward then Y means right;
 	FVector rightVector = FRotationMatrix(controlRot).GetScaledAxis(EAxis::Y);
 	AddMovementInput(rightVector, val);
 
+	if(val)
+		RestoreEnergyKeyPressedTick = 0;
+
 }
 
-
-void AHPlayerCharacter::PrimaryEmitt()
-{
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SMagspawnPars.Instigator = this;
-
-	LogOnScreen(this, "Primary Emitt");
-	if(ensure(BulletClass))
-		GetWorld()->SpawnActor<AActor>(BulletClass, GetTransform(), SMagspawnPars);
-}
 
 void AHPlayerCharacter::MoveForward(float val)
 {
@@ -89,13 +128,14 @@ void AHPlayerCharacter::MoveForward(float val)
 	// commit rotateVector to player comtroller;
 	AddMovementInput(controlRot.Vector(), val);
 
+	if (val)
+		RestoreEnergyKeyPressedTick = 0;
 }
 
 // Called every frame
 void AHPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -105,16 +145,50 @@ void AHPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AHPlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AHPlayerCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("ChangeCore", this, &AHPlayerCharacter::ChangeCore);
 
 	//AddControllerYawInput at Apawn
 	//you should open "Use Pawn Control Rotation" at springArmCom to allow playerController to controll arm
 	PlayerInputComponent->BindAxis("MouseX", this, &AHPlayerCharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseY", this, &AHPlayerCharacter::AddControllerPitchInput);
 	
-	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::StartJump);
+	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Released,this, &AHPlayerCharacter::StopJump);
+	
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::StartCrouch);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released,this, &AHPlayerCharacter::StopCrouch);
 	
 	PlayerInputComponent->BindAction("PrimaryAttack",IE_Pressed,this,&AHPlayerCharacter::PrimaryEmitt);
+	
+	PlayerInputComponent->BindAction("RestoreEnergy",IE_Pressed,this,&AHPlayerCharacter::OnStartRestoreEnergy);
+	PlayerInputComponent->BindAction("RestoreEnergy",IE_Repeat,this,&AHPlayerCharacter::OnRestoreEnergy);
+	
 
 
 }
 
+void AHPlayerCharacter::StartJump()
+{
+	Super::Jump();
+	bJumpButtonDown = CanJump();
+	DispatchJumpData();
+
+
+}
+
+void AHPlayerCharacter::StopJump()
+{
+	Super::StopJumping();
+	bJumpButtonDown = false;
+	DispatchJumpData();
+}
+
+void AHPlayerCharacter::DispatchJumpData()
+{
+	UCharacterMovementComponent* ComCM = GetCharacterMovement();
+	if (ComCM)
+	{
+		ComCM->JumpZVelocity = 400.f;
+	}
+	RestoreEnergyKeyPressedTick = 0;
+}
