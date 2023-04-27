@@ -131,6 +131,7 @@ void USActionComponent::RemoveAction(USAction* actionToRemove)
 	{
 		Actions.Remove(actionToRemove);
 	}
+
 }
 
 USActionComponent* USActionComponent::GetActions(AActor* fromactor)

@@ -37,8 +37,10 @@ protected:
 		class UCameraComponent* ComCamera;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class UHAttributeComponent* ComAttribute;
+		class UHActionComponent* ComActions;
 	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class UHAttributeComponent* ComAttribute;
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UHEmitterComponent* ComEmitter;
 	

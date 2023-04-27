@@ -9,6 +9,7 @@
 #include "HAttributeComponent.h"
 #include "Components/SphereComponent.h"
 #include "HEmitterComponent.h"
+#include "HActionComponent.h"
 
 // Sets default values
 AHPlayerCharacter::AHPlayerCharacter()
@@ -44,6 +45,8 @@ AHPlayerCharacter::AHPlayerCharacter()
 	//test and set in BP
 	//@check UCharacterMovementComponent .h 
 
+
+	ComActions = CreateDefaultSubobject<UHActionComponent>("HPlaComAction");
 	ComAttribute = CreateDefaultSubobject<UHAttributeComponent>("HPlaComAttribute");
 
 	ComEmitter = CreateDefaultSubobject<UHEmitterComponent>("HPlaComEmitter");
@@ -56,6 +59,9 @@ AHPlayerCharacter::AHPlayerCharacter()
 
 
 }
+
+
+
 
 // Called when the game starts or when spawned
 void AHPlayerCharacter::BeginPlay()
@@ -99,7 +105,7 @@ void AHPlayerCharacter::ChangeCore(float val)
 
 void AHPlayerCharacter::PrimaryEmitt()
 {
-	ComEmitter->EmitCurrentBullet(this);
+	ComActions->StartActionByName(this,TEXT("TriggerEmitter"));
 
 	RestoreEnergyKeyPressedTick = 0;
 }

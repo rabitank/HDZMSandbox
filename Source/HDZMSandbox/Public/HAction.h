@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "GameplayTagContainer.h"
-#include "SAction.generated.h"
+#include "HAction.generated.h"
+
 /**
  * 
  */
 
 USTRUCT()
-struct FSActionData
+struct FHActionData
 {
 	GENERATED_BODY()
 public:
@@ -23,35 +24,23 @@ public:
 
 };
 
-
 UCLASS(Blueprintable)
-class HDZMSANDBOX_API USAction : public UObject
+class HDZMSANDBOX_API UHAction : public UObject
 {
 	GENERATED_BODY()
-
-protected:
-	UPROPERTY(Replicated)
-		class USActionComponent* ActionComp;
-
-	UPROPERTY(VisibleAnywhere,ReplicatedUsing = "OnRep_ActionData",Category = "Action")
-		FSActionData RepActionData;
-	//for contiuing action,action would not auto intervally call stopAction , character may try to stopAction without startAction,
-	//and to avoid excuting new action without another action end, should to contain action bisrunning
-
-	//@Really?
-	//AActor's Spawn is defaulty be replicated to client
-	//but SAction is subclass of UO, its creation would be replicated to client in default case
 	
-	UFUNCTION()
-		void OnRep_ActionData();
+protected:
+	UPROPERTY()
+		class UHActionComponent* ActionComp;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(VisibleAnywhere, Category = "Action")
+		FHActionData ActionData;
+
+	UPROPERTY()
 		float StartedTime;
 
 public:
-	void Initialize	(USActionComponent* NewActionComp);
-
-
+	virtual void Initialize(UHActionComponent* NewActionComp);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 		class UTexture2D* ActionIcon;
@@ -61,17 +50,17 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 		void StartAction(AActor* Instigator);
-	
-	UFUNCTION(BlueprintCallable ,BlueprintNativeEvent, Category = "Action")
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Action")
 		void StopAction(AActor* Instigator);
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 		bool CanStart(AActor* Instigator);
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
 		bool IsRunning();
 
-	USAction();
+	UHAction();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 		FName AcitonName;
@@ -82,12 +71,8 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
-	class USActionComponent* GetOwningComponent() const;
+		class UHActionComponent* GetOwningComponent() const { return ActionComp; };
 
 	virtual class UWorld* GetWorld() const override;
-	virtual bool IsSupportedForNetworking() const override
-	{
-		return true;
-	};
-	
+
 };

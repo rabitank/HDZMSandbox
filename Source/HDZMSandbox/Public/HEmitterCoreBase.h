@@ -7,25 +7,37 @@
 #include "HBulletBase.h"
 #include "HEmitInterface.h"
 #include "HEmitAction.h"
+#include "Delegates/DelegateCombinations.h"
 #include "HEmitterCoreBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShootingStateChanged, class UHEmitterCoreBase*, thisCore, class AActor*, instigatorActor);
 
 /**
  * 
  */
 UCLASS()
-class HDZMSANDBOX_API UHEmitterCoreBase : public UHEmitAction , public IHEmitInterface
+class HDZMSANDBOX_API UHEmitterCoreBase : public UObject, public IHEmitInterface
 {
 	GENERATED_BODY()
 public:
+	//************************************
+	// Method:    UHEmitterCoreBase
+	// Access:    public 
+	// Desribe:	  Dont't allow Directly instant UHEmitterCoreBase in UE
+	//************************************
 	UHEmitterCoreBase();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
 		TSubclassOf<AHBulletBase> BulletClass;
 	
-	UPROPERTY(EditAnywhere, Category = "EmitterCore")
-	class UHAttributeComponent* ComEnergySource;
+	UPROPERTY(VisibleAnywhere, Category = "EmitterCore")
+	class UHAttributeComponent* ComOwnerEnergySource;
+	
+	UPROPERTY(VisibleAnywhere, Category = "EmitterCore")
+	class UHEmitterComponent* ComOwnerEmitter;
 
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
 	float CoolDownDuration;
@@ -40,10 +52,13 @@ protected:
 	float BackInitDuration;
 
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
-	bool bIsAbsorbable;
+	float EnergyDemand;
 
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
-	float EnergyDemand;
+	bool bIsAbsorbable;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
+	bool bIsShooting;
 
 	//should spawn bullet before UHEmitActions preparetime
 	FTimerHandle TimerHandle_SpawnBulletDelay;
@@ -55,10 +70,10 @@ protected:
 
 public:
 
-	void Initialize(UHAttributeComponent* energySource, UHEmitterComponent* EmitterComp) ;
+
+	void Initialize(UHEmitterComponent* EmitterComp) ;
 
 	void Emit_Implementation(AActor* Instigator);
-
 
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
 		FName CoreName;
@@ -66,9 +81,25 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CanEmit(AActor* Instigator);
 
-	virtual void StopShoot_Implementation(AActor* Instigator) override;
 
-	virtual void StartShoot_Implementation(AActor* Instiagtor) override;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPressedTrigger(AActor* Instigator) ;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnReleasedTriger(AActor* Instiagtor);
+
+	UFUNCTION(BlueprintCallable)
+		bool IsShooting() const { return bIsShooting; }
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StopShoot(AActor* Instigator) ;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StartShoot(AActor* Instiagtor);
+
+	FOnShootingStateChanged OnShootStarted;
+	FOnShootingStateChanged OnShootStoped;
 
 
 

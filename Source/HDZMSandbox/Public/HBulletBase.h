@@ -40,8 +40,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bullet")
 	float FlyStartedTime;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet")
 	float LifeDuration;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet")
 	FTimerHandle TimeHandle_FadeAway;
 	
@@ -49,7 +51,6 @@ protected:
 	//@DefaultValue: false
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
 	bool bCanFadeAway;
-
 
 	UFUNCTION()
 	void OnActorHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& hit);
@@ -61,7 +62,7 @@ protected:
 	void Exploed();
 
 	UFUNCTION(BlueprintNativeEvent)
-		void ApplyRecoilForce();
+	void ApplyRecoilForce();
 
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	//	class UParticleSystemComponent* ComEffectParticle;

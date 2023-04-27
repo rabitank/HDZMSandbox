@@ -10,7 +10,7 @@
 
 UHEmitterCoreBase::UHEmitterCoreBase()
 {
-	ComEnergySource = nullptr;
+	ComOwnerEnergySource = nullptr;
 	//default: Spawn bullet when EmitAction over;
 
 	CoolDownDuration = 10.f;
@@ -24,9 +24,10 @@ UHEmitterCoreBase::UHEmitterCoreBase()
 
 	//@FixMe:
 	//rewrite in BP
-	Duration = SpawnDuration + BackInitDuration;
+	//Duration = SpawnDuration + BackInitDuration;
 }
 
+//remove it to PrimaryCore?
 void UHEmitterCoreBase::SpawnBulletDelay_Implementation(AActor* instigator)
 {
 	FActorSpawnParameters SMagspawnPars;
@@ -46,45 +47,52 @@ void UHEmitterCoreBase::SpawnBulletDelay_Implementation(AActor* instigator)
 
 	AActor* spawnedBullet = nullptr;
 	if (ensure(BulletClass))
-		spawnedBullet =  GetWorld()->SpawnActor<AActor>(BulletClass, GetOwningComponent()->GetDefaultMuzzleTransform(), SMagspawnPars);
+		spawnedBullet =  GetWorld()->SpawnActor<AActor>(BulletClass, ComOwnerEmitter->GetDefaultMuzzleTransform(), SMagspawnPars);
+	//if successed spawned , ApplyEnergy
+	if (spawnedBullet)
+	{
+		if (ComOwnerEnergySource)
+		{
+			ComOwnerEnergySource->ApplyEnergyChangeDelta(instigator, -EnergyDemand);
+		}
+	}
 
+	//@fixme: move it(the connection between stop start and spawn function) to its sub class
 	FTimerDelegate dele;
 	dele.BindUFunction(this,"StopShoot",instigator);
 	GetWorld()->GetTimerManager().SetTimer(TimeHandle_PrepareOverStopShooting, dele,SpawnDuration, false);
 
-
-	//if successed spawned , ApplyEnergy
-	if (spawnedBullet)
-	{
-		if (ComEnergySource)
-		{
-			ComEnergySource->ApplyEnergyChangeDelta(instigator, -EnergyDemand);
-		}
-	}
-	
 }
 
 
-void UHEmitterCoreBase::Initialize(UHAttributeComponent* energySource, UHEmitterComponent* EmitterComp)
+void UHEmitterCoreBase::Initialize(UHEmitterComponent* EmitterComp)
 {
-	if (ensure(energySource))
-		ComEnergySource = energySource;
-	else
-		ComEnergySource = nullptr;
-	Super::Initialize(EmitterComp);
+	if (ensure(EmitterComp))
+	{
+		ComOwnerEmitter = EmitterComp;
+
+		UHAttributeComponent* energySource = UHAttributeComponent::GetAttribute(EmitterComp->GetOwner());
+
+		if (ensure(energySource))
+			ComOwnerEnergySource = energySource;
+		else
+			ComOwnerEnergySource = nullptr;
+
+		return;
+	}
+	ComOwnerEmitter = nullptr;
+
 }
 
 void UHEmitterCoreBase::Emit_Implementation(AActor* Instigator)
 {
-
 	StartShoot(Instigator);
-
 }
 
 
 bool UHEmitterCoreBase::CanEmit(AActor* Instigator)
 {
-	APawn* OwnerPawn =Cast<APawn>(GetOwningComponent()->GetOwner());
+	APawn* OwnerPawn =Cast<APawn>(ComOwnerEmitter->GetOwner());
 	if (ensure(OwnerPawn))
 	{
 		AHPlayerCharacter* HPlayer = Cast<AHPlayerCharacter>(OwnerPawn);
@@ -107,36 +115,50 @@ bool UHEmitterCoreBase::CanEmit(AActor* Instigator)
 
 		}
 		//non Player Pawn don't need check cooldown and energy 
-		return Super::CanStart(Instigator);
+		return true ;
 	}
-
-
-
 	//non Pawn don't need check; . set by other loop
 	return true;
-	
-	
+}
+
+void UHEmitterCoreBase::OnReleasedTriger_Implementation(AActor* Instiagtor)
+{
+
+}
+
+void UHEmitterCoreBase::OnPressedTrigger_Implementation(AActor* Instigator)
+{
+
 }
 
 void UHEmitterCoreBase::StopShoot_Implementation(AActor* Instigator)
 {
-	Super::StopShoot_Implementation(Instigator);
+
 	LastShootTime = GetWorld()->GetTimeSeconds();
-	
-	FString msg = FString::Printf(TEXT("EmitterCore %s:EmitAction Over"), *CoreName.ToString());
+	bIsShooting = false;
+
+	FString msg = FString::Printf(TEXT("Core: %s StopShooting"), *CoreName.ToString());
 	LogOnScreen(this, msg, FColor::Yellow);
 
+	OnShootStoped.Broadcast(this,Instigator);
+	
 }
 
 void UHEmitterCoreBase::StartShoot_Implementation(AActor* Instigator)
 {
-	Super::StartShoot_Implementation(Instigator);
+	bIsShooting = true;
 
+	FString msg = FString::Printf(TEXT("Core: %s StartShooting"), *CoreName.ToString());
+	LogOnScreen(this, msg, FColor::Green);
+
+	OnShootStarted.Broadcast(this,Instigator);
+
+
+
+	//@fixme: move it(the connection between stop start and spawn function) to its sub class
 	FTimerDelegate dele;
 	dele.BindUFunction(this, TEXT("SpawnBulletDelay"), Instigator);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_SpawnBulletDelay, dele, SpawnDuration, false);
-
-
 
 }
 

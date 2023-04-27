@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../HDZMSandbox.h"
 
+
 // Sets default values
 AHBulletBase::AHBulletBase()
 {
@@ -64,7 +65,7 @@ void AHBulletBase::BeginPlay()
 void AHBulletBase::ApplyRecoilForce_Implementation()
 {
 	APawn* InsPawn = Cast<APawn>(GetInstigator());
-	if (ensure(InsPawn))
+	if (InsPawn)
 	{
 		AHPlayerCharacter* Player = Cast<AHPlayerCharacter>(InsPawn);
 		if (Player)

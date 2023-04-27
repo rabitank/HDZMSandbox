@@ -62,9 +62,7 @@ public:
 
 
 
-
-
-	static UHAttributeComponent* GetAttribute(APawn* pawn);
+	static UHAttributeComponent* GetAttribute(AActor* formActor);
 
 		
 };

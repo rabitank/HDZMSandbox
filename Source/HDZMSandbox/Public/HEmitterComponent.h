@@ -26,10 +26,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Emitter")
 		int32 CoreSlotsNum;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Emitter")
-		class UHAttributeComponent* EnergySourceComp;
-
 
 	UPROPERTY(EditAnywhere, Category = "Emitter")
 		TArray<TSubclassOf<UHEmitterCoreBase>> DefaultEmitterCoreClass;
@@ -42,6 +38,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
 	float CurrentCoreIndex;
+
+	UPROPERTY(VisibleAnywhere, Category = "Emitter")
+	bool bIsTriggering;
 
 public:
 
@@ -69,13 +68,10 @@ public:
 
 	//UFUNCTION(BlueprintCallable, Category = "Actions")
 	//bool StopCoreByName(AActor* Instigator, FName CoreName);
-	
 
 	//@TODO:
 	//for a core need pressed the key for a short time, when stop pressed before spawn bullet can stop the emitting
 	//wait for more complexed core to use
-	UFUNCTION(BlueprintCallable, Category = "Emitter")
-	bool StopCurrentCoreEmit(AActor* Instigator);
 
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
 	void RemoveCore(UHEmitterCoreBase* CoreToRemove);
@@ -83,7 +79,13 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-		void EmitCurrentBullet(AActor* instigator);
+	void OnTrigerPressed(AActor* instigator);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnTrigerReleased(AActor* instigator);
+
+	inline void SetTriggerState(bool newState) {	bIsTriggering = newState;};
+	inline bool GetTriggerState() {	return bIsTriggering ;};
 
 	static UHEmitterComponent* GetEmitter(AActor* actor);
 
@@ -91,7 +93,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	bool bIsShooting;
 
 		
 };

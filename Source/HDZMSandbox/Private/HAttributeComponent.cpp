@@ -112,11 +112,11 @@ void UHAttributeComponent::RestoreEnergyToInitLevel()
 }
 
 
-UHAttributeComponent* UHAttributeComponent::GetAttribute(APawn* pawn)
+UHAttributeComponent* UHAttributeComponent::GetAttribute(AActor* actor)
 {
-	if (ensure(pawn))
+	if (ensure(actor))
 	{
-		UHAttributeComponent* attribute = Cast<UHAttributeComponent>(pawn->GetComponentByClass(UHAttributeComponent::StaticClass()));
+		UHAttributeComponent* attribute = Cast<UHAttributeComponent>(actor->GetComponentByClass(UHAttributeComponent::StaticClass()));
 		if (attribute)
 			return attribute;
 	

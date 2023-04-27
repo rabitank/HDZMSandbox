@@ -4,70 +4,71 @@
 #include "HEmitAction.h"
 #include "HEmitterComponent.h"
 #include "../HDZMSandbox.h"
+#include "HActionComponent.h"
 
-void UHEmitAction::Initialize(UHEmitterComponent* NewEmitterComp)
+void UHEmitAction::Initialize(class UHActionComponent* InitActionComp)
 {
+	Super::Initialize(InitActionComp);
+
+	UHEmitterComponent* NewEmitterComp = Cast<UHEmitterComponent>(InitActionComp->GetOwner()->GetComponentByClass(UHEmitterComponent::StaticClass()));
+	if (!ensure(NewEmitterComp))
+	{
+		FString ActionMsg = FString::Printf(TEXT("owner:%s didnt has HEmitterComponent"), *GetNameSafe(GetOuter()));
+		LogOnScreen(this, ActionMsg, FColor::Red, 0.f);
+		EmitterCompnent = nullptr;
+
+		return;
+	}
 	EmitterCompnent = NewEmitterComp;
 }
 
+
 UHEmitAction::UHEmitAction()
 {
-	AcitonName = "Shoot";
-	Duration = 1.f;
+
 }
 
-void UHEmitAction::StartShoot_Implementation(AActor* Instigator)
+void UHEmitAction::StartAction_Implementation(AActor* Instigator)
 {
-	UHEmitterComponent* ComOwner = GetOwningComponent();
-	ComOwner->bIsShooting =true;
+	Super::StartAction_Implementation(Instigator);
 
-	EmitActionData.bIsRunning= true;
-	EmitActionData.Instigator = Instigator;
-
+	EmitterCompnent->OnTrigerPressed(Instigator);
+	EmitterCompnent->SetTriggerState( true);
 	//@fix: the Event will be of EmitterCOmpoent
 	//ComOwner->OnActionStarted.Broadcast(ComOwner, this);
 
-	//only get time in server
-	StartedTime = GetWorld()->GetTimeSeconds();
-
-	LogOnScreen(GetOwningComponent(), "EmitAction Started", FColor::Yellow);
-
-	
 }
 
-void UHEmitAction::StopShoot_Implementation(AActor* Instigator)
+void UHEmitAction::StopAction_Implementation(AActor* Instigator)
 {
-	EmitActionData.bIsRunning = false;
-	UHEmitterComponent* comp = GetOwningComponent();
+	Super::StopAction_Implementation(Instigator);
+
+	UHEmitterComponent* comp = EmitterCompnent;
 	if (ensure(comp))
 	{
-		comp->bIsShooting = false;
+		comp->SetTriggerState(false);
 	}
 }
+
 
 bool UHEmitAction::CanStart_Implementation(AActor* Instigator)
 {
-	//avoid reStart without stop 
-	if (IsShooting())
-		return false;
+	
+	//contain IsTrigering, The Action Tag Triger is in sync with Emitter IsTrigger
+	bool IsActionOK = Super::CanStart_Implementation(Instigator);
 
-	UHEmitterComponent* comp = GetOwningComponent();
-
-	return !comp->bIsShooting;
-}
-
-class UHEmitterComponent* UHEmitAction::GetOwningComponent() const
-{
-	return EmitterCompnent;
-}
-
-class UWorld* UHEmitAction::GetWorld() const
-{
-	//outer is set when creating action via NewObject<T>
-	AActor* actor = Cast<AActor>(GetOuter());
-	if (actor)
+	if (!IsActionOK)
 	{
-		return actor->GetWorld();
+		return false;
 	}
-	return nullptr;
+
+	//if Can't Emit, no anyReaction
+	if (EmitterCompnent->GetCurrentCore()->CanEmit(Instigator) )
+	{
+		return true;
+	}
+
+	return false;
+
 }
+
