@@ -117,6 +117,10 @@ void UHActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	for (TSubclassOf<UHAction> action : DefaultActions)
+	{
+		AddAction(GetOwner(), action); //defalut USAction SubAction(bp subInstanceClass)
+	}
 	// ...
 	
 }

@@ -32,22 +32,23 @@ void UHEmitAction::StartAction_Implementation(AActor* Instigator)
 {
 	Super::StartAction_Implementation(Instigator);
 
-	EmitterCompnent->OnTrigerPressed(Instigator);
-	EmitterCompnent->SetTriggerState( true);
-	//@fix: the Event will be of EmitterCOmpoent
-	//ComOwner->OnActionStarted.Broadcast(ComOwner, this);
-
+	if (ensure(EmitterCompnent))
+	{
+		EmitterCompnent->OnTrigerPressed(Instigator);
+		EmitterCompnent->SetTriggerState(true);
+	}
 }
 
 void UHEmitAction::StopAction_Implementation(AActor* Instigator)
 {
 	Super::StopAction_Implementation(Instigator);
 
-	UHEmitterComponent* comp = EmitterCompnent;
-	if (ensure(comp))
+	if (ensure(EmitterCompnent))
 	{
-		comp->SetTriggerState(false);
+		EmitterCompnent->OnTrigerReleased(Instigator);
+		EmitterCompnent->SetTriggerState(false);
 	}
+
 }
 
 
@@ -62,13 +63,7 @@ bool UHEmitAction::CanStart_Implementation(AActor* Instigator)
 		return false;
 	}
 
-	//if Can't Emit, no anyReaction
-	if (EmitterCompnent->GetCurrentCore()->CanEmit(Instigator) )
-	{
-		return true;
-	}
-
-	return false;
+	return true;
 
 }
 

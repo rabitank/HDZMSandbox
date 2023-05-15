@@ -7,10 +7,9 @@
 #include "HBulletBase.h"
 #include "HEmitInterface.h"
 #include "HEmitAction.h"
-#include "Delegates/DelegateCombinations.h"
 #include "HEmitterCoreBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShootingStateChanged, class UHEmitterCoreBase*, thisCore, class AActor*, instigatorActor);
+
 
 /**
  * 
@@ -46,9 +45,6 @@ protected:
 	float LastShootTime;
 	
 	UPROPERTY(EditDefaultsOnly,Category = "EmitterCore")
-	float SpawnDuration;
-	
-	UPROPERTY(EditDefaultsOnly,Category = "EmitterCore")
 	float BackInitDuration;
 
 	UPROPERTY(EditDefaultsOnly, Category = "EmitterCore")
@@ -63,15 +59,11 @@ protected:
 	//should spawn bullet before UHEmitActions preparetime
 	FTimerHandle TimerHandle_SpawnBulletDelay;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void SpawnBulletDelay(AActor* instigator );
-
 	FTimerHandle TimeHandle_PrepareOverStopShooting;
 
 public:
 
-
-	void Initialize(UHEmitterComponent* EmitterComp) ;
+	virtual void Initialize(UHEmitterComponent* EmitterComp) ;
 
 	void Emit_Implementation(AActor* Instigator);
 
@@ -84,13 +76,13 @@ public:
 
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnPressedTrigger(AActor* Instigator) ;
+	bool OnPressedTrigger(AActor* Instigator) ;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnReleasedTriger(AActor* Instiagtor);
 
 	UFUNCTION(BlueprintCallable)
-		bool IsShooting() const { return bIsShooting; }
+	bool IsShooting() const { return bIsShooting; }
 
 	UFUNCTION(BlueprintNativeEvent)
 	void StopShoot(AActor* Instigator) ;
@@ -98,8 +90,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void StartShoot(AActor* Instiagtor);
 
-	FOnShootingStateChanged OnShootStarted;
-	FOnShootingStateChanged OnShootStoped;
 
 
 

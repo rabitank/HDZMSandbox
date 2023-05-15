@@ -10,6 +10,7 @@
 #include "Components/SphereComponent.h"
 #include "HEmitterComponent.h"
 #include "HActionComponent.h"
+#include "Components/ArrowComponent.h"
 
 // Sets default values
 AHPlayerCharacter::AHPlayerCharacter()
@@ -54,94 +55,36 @@ AHPlayerCharacter::AHPlayerCharacter()
 	ComSphereCollision = CreateDefaultSubobject<USphereComponent>("HPlaComSphereCollision");
 	ComSphereCollision->SetupAttachment(GetRootComponent());
 
+	ComEmitterMoveController  = CreateDefaultSubobject<USphereComponent>("HPlaComEmitterMoveController");
+	ComEmitterMoveController->SetupAttachment(GetRootComponent());
+
+	ComEmitterLocation = CreateDefaultSubobject<USceneComponent>("HPlaComEmiiterPostion");
+	ComEmitterLocation->SetupAttachment(ComEmitterMoveController);
+
+	EmitterMoveRadiance = 150.f;
+	EmitterMoveOffSet = FVector(0.f,0.f,7.f);
+	EmitterDirectionOffSet = FRotator(0.f,10.f,10.f);
+
+	ComEmitterDireation = CreateDefaultSubobject<UArrowComponent>("HPlaComEmitterDireation");
+	ComEmitterDireation->SetupAttachment(ComEmitterLocation);
+	ComEmitterDireation->SetHiddenInGame(false);
+	ComEmitterDireation->SetRelativeTransform(FTransform::Identity);
+
+
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
+	ComEmitterMoveController->SetSphereRadius(EmitterMoveRadiance, true);
+	ComEmitterMoveController->SetRelativeLocation(EmitterMoveOffSet);
 
 }
 
-
-
-
-// Called when the game starts or when spawned
-void AHPlayerCharacter::BeginPlay()
+void AHPlayerCharacter::PostInitializeComponents()
 {
-	Super::BeginPlay();
-	
-}
+	Super::PostInitializeComponents();
+	ComEmitterLocation->SetRelativeLocation(FVector(EmitterMoveRadiance, 0.f, 0.f));
 
-void AHPlayerCharacter::OnRestoreEnergy()
-{
-
-	// make RestoreEnergy invalid / break this one Restore by set it 0 ;
-	if (RestoreEnergyKeyPressedTick == 0)
-		return;
-
-	//TicksPerSecond 10000000
-	float holdSeconds = (FDateTime::Now().GetTicks() - RestoreEnergyKeyPressedTick )/ 10000000.f;
-	// @fix: may need a little UI Animate
-
-	UE_LOG(LogTemp, Warning, TEXT("OnRestoreEnergy holdSeconds:%f"), holdSeconds);
-
-	if (holdSeconds > 2.5f)
-		ComAttribute->RestoreEnergyToInitLevel();
-
-}
-
-
-void AHPlayerCharacter::OnStartRestoreEnergy()
-{
-	LogOnScreen(this, "OnStartRestoreEnergy");
-
-	RestoreEnergyKeyPressedTick = FDateTime::Now().GetTicks();
-}
-
-void AHPlayerCharacter::ChangeCore(float val)
-{
-	if(val)
-		ComEmitter->SlideCore(val);
-
-}
-
-void AHPlayerCharacter::PrimaryEmitt()
-{
-	ComActions->StartActionByName(this,TEXT("TriggerEmitter"));
-
-	RestoreEnergyKeyPressedTick = 0;
-}
-
-void AHPlayerCharacter::MoveRight(float val)
-{
-	FRotator controlRot = GetControlRotation();
-	controlRot.Roll = 0.f;
-	controlRot.Pitch = 0.f;
-
-	//X means forward then Y means right;
-	FVector rightVector = FRotationMatrix(controlRot).GetScaledAxis(EAxis::Y);
-	AddMovementInput(rightVector, val);
-
-	if(val)
-		RestoreEnergyKeyPressedTick = 0;
-
-}
-
-
-void AHPlayerCharacter::MoveForward(float val)
-{
-	FRotator controlRot = GetControlRotation();
-	controlRot.Roll = 0.f;
-	controlRot.Pitch = 0.f;
-	// commit rotateVector to player comtroller;
-	AddMovementInput(controlRot.Vector(), val);
-
-	if (val)
-		RestoreEnergyKeyPressedTick = 0;
-}
-
-// Called every frame
-void AHPlayerCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -164,21 +107,43 @@ void AHPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::StartCrouch);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released,this, &AHPlayerCharacter::StopCrouch);
 	
-	PlayerInputComponent->BindAction("PrimaryAttack",IE_Pressed,this,&AHPlayerCharacter::PrimaryEmitt);
+	PlayerInputComponent->BindAction("PrimaryAttack",IE_Pressed,this,&AHPlayerCharacter::OnTriggerPressed);
+	PlayerInputComponent->BindAction("PrimaryAttack",IE_Released,this,&AHPlayerCharacter::OnTriggerReleased);
 	
 	PlayerInputComponent->BindAction("RestoreEnergy",IE_Pressed,this,&AHPlayerCharacter::OnStartRestoreEnergy);
-	PlayerInputComponent->BindAction("RestoreEnergy",IE_Repeat,this,&AHPlayerCharacter::OnRestoreEnergy);
-	
+	PlayerInputComponent->BindAction("RestoreEnergy",IE_Released,this,&AHPlayerCharacter::OnStopedRestoreEnergy);
+}
 
+void AHPlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	FVector EmitterLocation = ComEmitterMoveController->GetRelativeLocation() + GetActorLocation() + GetControlRotation().Vector() * EmitterMoveRadiance ;
+	FRotator EmitterRotation = (GetControlRotation() + EmitterDirectionOffSet).GetNormalized();
+	ComEmitterLocation->SetWorldLocation(EmitterLocation);
+	ComEmitterLocation->SetWorldRotation(EmitterRotation);
 
 }
+
+
+
+void AHPlayerCharacter::OnStopedRestoreEnergy()
+{
+	ComActions->StopActionByName(this, "RestoreEnergy");
+}
+
+void AHPlayerCharacter::OnStartRestoreEnergy()
+{
+	ComActions->StartActionByName(this, "RestoreEnergy");
+
+}
+
 
 void AHPlayerCharacter::StartJump()
 {
 	Super::Jump();
 	bJumpButtonDown = CanJump();
 	DispatchJumpData();
-
 
 }
 
@@ -196,5 +161,42 @@ void AHPlayerCharacter::DispatchJumpData()
 	{
 		ComCM->JumpZVelocity = 400.f;
 	}
-	RestoreEnergyKeyPressedTick = 0;
+}
+
+void AHPlayerCharacter::OnTriggerPressed()
+{
+	ComActions->StartActionByName(this, TEXT("TriggerEmitter"));
+}
+
+void AHPlayerCharacter::OnTriggerReleased()
+{
+	ComActions->StopActionByName(this, TEXT("TriggerEmitter"));
+
+}
+
+void AHPlayerCharacter::MoveRight(float val)
+{
+	FRotator controlRot = GetControlRotation();
+	controlRot.Roll = 0.f;
+	controlRot.Pitch = 0.f;
+
+	//X means forward then Y means right;
+	FVector rightVector = FRotationMatrix(controlRot).GetScaledAxis(EAxis::Y);
+	AddMovementInput(rightVector, val);
+}
+
+void AHPlayerCharacter::MoveForward(float val)
+{
+	FRotator controlRot = GetControlRotation();
+	controlRot.Roll = 0.f;
+	controlRot.Pitch = 0.f;
+	// commit rotateVector to player comtroller;
+	AddMovementInput(controlRot.Vector(), val);
+}
+
+void AHPlayerCharacter::ChangeCore(float val)
+{
+	if (val)
+		ComEmitter->SlideCore(val);
+
 }

@@ -17,22 +17,26 @@ public:
 	AHPlayerCharacter();
 
 protected:
-	UPROPERTY(BlueprintReadWrite, Category = "Anim Control")
+	UPROPERTY( EditAnywhere,BlueprintReadWrite, Category = "Anim Control")
 		bool bCrouchButtonDown;
 	
-	UPROPERTY(BlueprintReadWrite, Category = "Anim Control")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Anim Control")
 		bool bJumpButtonDown;
 
-	int64 RestoreEnergyKeyPressedTick =0;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
+		float EmitterMoveRadiance;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
+		FVector EmitterMoveOffSet;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
+		FRotator EmitterDirectionOffSet;
 
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Components")
 		class USpringArmComponent* ComSpringArm;
 	
+
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UCameraComponent* ComCamera;
 	
@@ -41,16 +45,21 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UHAttributeComponent* ComAttribute;
+
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UHEmitterComponent* ComEmitter;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class USphereComponent* ComSphereCollision;
 	
-
-	UPROPERTY(EditDefaultsOnly, Category = "Bullet")
-		TSubclassOf<AHBulletBase> BulletClass;
-
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class USceneComponent* ComEmitterLocation;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class USphereComponent* ComEmitterMoveController;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		class UArrowComponent* ComEmitterDireation;
 
 protected:
 	void MoveRight(float val);
@@ -63,16 +72,20 @@ protected:
 	void StartJump();
 	void StopJump();
 	void DispatchJumpData();
-	void PrimaryEmitt();
+	void OnTriggerPressed();
+	void OnTriggerReleased();
 
-	void OnRestoreEnergy();
+	void OnStopedRestoreEnergy();
 	void OnStartRestoreEnergy();
 
 
 public:	
-	// Called every fram
-	virtual void Tick(float DeltaTime) override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void PostInitializeComponents() override;
+	
+	USceneComponent* GetEmitterMoveComp() { return ComEmitterLocation; };
 
 };

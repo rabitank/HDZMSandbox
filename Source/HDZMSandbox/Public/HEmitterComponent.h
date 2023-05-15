@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HEmitterCoreBase.h"
+#include "Delegates/DelegateCombinations.h"
 #include "HEmitterComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShootingStateChanged, class UHEmitterCoreBase*, thisCore, class AActor*, instigatorActor);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HDZMSANDBOX_API UHEmitterComponent : public UActorComponent
@@ -92,6 +94,9 @@ public:
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	FOnShootingStateChanged OnShootStarted;
+	FOnShootingStateChanged OnShootStoped;
 
 
 		

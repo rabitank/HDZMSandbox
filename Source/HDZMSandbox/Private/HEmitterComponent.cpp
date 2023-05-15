@@ -99,13 +99,16 @@ UHEmitterCoreBase* UHEmitterComponent::SelectedCoreByNum(int val)
 FTransform UHEmitterComponent::GetDefaultMuzzleTransform()
 {
 
-	//@FixMe: you should by Character->getMesh()->getSocket.... when you have a CharacterMesh has Muzzel Bone/socket
-	UStaticMeshComponent* mesh = Cast<UStaticMeshComponent>( GetOwner()->GetComponentByClass(UStaticMeshComponent::StaticClass()) );
-
-	if (mesh)
-		return mesh->GetSocketTransform(DefaultMuzzelSocketName);
-	else
-		return FTransform(GetOwner()->GetActorRotation(), GetOwner()->GetActorLocation() + 80*GetOwner()->GetActorForwardVector());
+	AHPlayerCharacter* player = Cast<AHPlayerCharacter>(GetOwner());
+	if (player)
+	{
+		USceneComponent* EmitterMove = player->GetEmitterMoveComp();
+		if (ensure(EmitterMove))
+		{
+			return player->GetEmitterMoveComp()->GetComponentTransform();
+		}
+	}
+	return FTransform(GetOwner()->GetActorRotation(), GetOwner()->GetActorLocation() + 80*GetOwner()->GetActorForwardVector());
 
 }
 
@@ -196,13 +199,17 @@ void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::White, DebugMsg);
 
 	FColor currentCoreColor = bIsTriggering ? FColor::Yellow : FColor::Green;
-	currentCoreColor = CurrentCore->IsShooting() ? FColor::Red : currentCoreColor;
-
-	for (UHEmitterCoreBase* core : EmitterCores)
+	if (CurrentCore)
 	{
-		FColor TextColor = core == CurrentCore ? currentCoreColor : FColor::Blue;
-		FString CoreMsg = FString::Printf(TEXT("[%s] CurrentCore:%s"), *GetNameSafe(GetOwner()), *CurrentCore->CoreName.ToString());
-		LogOnScreen(this, CoreMsg, TextColor, 0.f);
+		currentCoreColor = CurrentCore->IsShooting() ? FColor::Red : currentCoreColor;
+
+		for (UHEmitterCoreBase* core : EmitterCores)
+		{
+			FColor TextColor = core == CurrentCore ? currentCoreColor : FColor::Blue;
+			FString CoreMsg = FString::Printf(TEXT("[%s] CurrentCore:%s"), *GetNameSafe(GetOwner()), *CurrentCore->CoreName.ToString());
+			LogOnScreen(this, CoreMsg, TextColor, 0.f);
+		}
+
 	}
 		
 }

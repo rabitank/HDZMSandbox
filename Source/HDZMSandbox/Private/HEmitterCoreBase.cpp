@@ -18,8 +18,6 @@ UHEmitterCoreBase::UHEmitterCoreBase()
 	bIsAbsorbable = true;
 
 	EnergyDemand = 20.f;
-	
-	SpawnDuration = 0.2f;
 	BackInitDuration = 0.1f;
 
 	//@FixMe:
@@ -27,42 +25,7 @@ UHEmitterCoreBase::UHEmitterCoreBase()
 	//Duration = SpawnDuration + BackInitDuration;
 }
 
-//remove it to PrimaryCore?
-void UHEmitterCoreBase::SpawnBulletDelay_Implementation(AActor* instigator)
-{
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	APawn* pawnInstigator = Cast<APawn>(instigator);
-	if (pawnInstigator)
-	{
-		SMagspawnPars.Instigator = pawnInstigator;
-		
-	}
-	//emit from Muzzle Slot Position!
-	//HEmitterComp should keep the slot/slot name;
-	
-	//@FixedMe , also should 
-	LogOnScreen(instigator, "Bullet spawn");
-
-	AActor* spawnedBullet = nullptr;
-	if (ensure(BulletClass))
-		spawnedBullet =  GetWorld()->SpawnActor<AActor>(BulletClass, ComOwnerEmitter->GetDefaultMuzzleTransform(), SMagspawnPars);
-	//if successed spawned , ApplyEnergy
-	if (spawnedBullet)
-	{
-		if (ComOwnerEnergySource)
-		{
-			ComOwnerEnergySource->ApplyEnergyChangeDelta(instigator, -EnergyDemand);
-		}
-	}
-
-	//@fixme: move it(the connection between stop start and spawn function) to its sub class
-	FTimerDelegate dele;
-	dele.BindUFunction(this,"StopShoot",instigator);
-	GetWorld()->GetTimerManager().SetTimer(TimeHandle_PrepareOverStopShooting, dele,SpawnDuration, false);
-
-}
 
 
 void UHEmitterCoreBase::Initialize(UHEmitterComponent* EmitterComp)
@@ -126,9 +89,15 @@ void UHEmitterCoreBase::OnReleasedTriger_Implementation(AActor* Instiagtor)
 
 }
 
-void UHEmitterCoreBase::OnPressedTrigger_Implementation(AActor* Instigator)
+bool UHEmitterCoreBase::OnPressedTrigger_Implementation(AActor* Instigator)
 {
+	if (!CanEmit(Instigator))
+	{
+		LogOnScreen(this, "CurrrentCore can't emit!");
+		return false;
+	}
 
+	return true;
 }
 
 void UHEmitterCoreBase::StopShoot_Implementation(AActor* Instigator)
@@ -140,7 +109,7 @@ void UHEmitterCoreBase::StopShoot_Implementation(AActor* Instigator)
 	FString msg = FString::Printf(TEXT("Core: %s StopShooting"), *CoreName.ToString());
 	LogOnScreen(this, msg, FColor::Yellow);
 
-	OnShootStoped.Broadcast(this,Instigator);
+	ComOwnerEmitter->OnShootStoped.Broadcast(this,Instigator);
 	
 }
 
@@ -151,14 +120,10 @@ void UHEmitterCoreBase::StartShoot_Implementation(AActor* Instigator)
 	FString msg = FString::Printf(TEXT("Core: %s StartShooting"), *CoreName.ToString());
 	LogOnScreen(this, msg, FColor::Green);
 
-	OnShootStarted.Broadcast(this,Instigator);
+	ComOwnerEmitter->OnShootStarted.Broadcast(this,Instigator);
 
 
 
-	//@fixme: move it(the connection between stop start and spawn function) to its sub class
-	FTimerDelegate dele;
-	dele.BindUFunction(this, TEXT("SpawnBulletDelay"), Instigator);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_SpawnBulletDelay, dele, SpawnDuration, false);
 
 }
 
