@@ -15,5 +15,11 @@
 				"CoreUObject"
 			]
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		}
 	]
 }
