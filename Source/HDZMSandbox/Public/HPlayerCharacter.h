@@ -37,8 +37,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class USphereComponent* ComSphereCollision;
 
+
 	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
 		EHShootType ShootType{EHShootType::None};
+	
+	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
+		bool EmitterAiming{false};
+	
+
 
 
 

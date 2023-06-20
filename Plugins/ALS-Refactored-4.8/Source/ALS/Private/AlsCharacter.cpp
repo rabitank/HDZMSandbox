@@ -734,7 +734,7 @@ void AAlsCharacter::OnOverlayModeChanged_Implementation(const FGameplayTag& Prev
 
 FRotator AAlsCharacter::GetViewRotation() const
 {
-	return ViewRotation ;
+	return ViewRotation;
 }
 
 void AAlsCharacter::SetViewRotation(const FRotator& NewViewRotation)
