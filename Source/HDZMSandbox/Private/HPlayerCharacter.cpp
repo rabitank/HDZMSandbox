@@ -252,7 +252,7 @@ void AHPlayerCharacter::OnStartRestoreEnergy()
 
 void AHPlayerCharacter::OnTriggerPressed()
 {
-	if ( GetDesiredRotationMode() == EAlsRotationMode::Aiming)
+	if ( GetRotationMode() == EAlsRotationMode::Aiming)
 	{
 		ShootType = EHShootType::BackwardShoot;
 	}

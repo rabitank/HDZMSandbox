@@ -152,7 +152,7 @@ private:
 	void RefreshGrounded(float DeltaTime);
 
 	void RefreshMovementDirection();
-	
+
 	void RefreshVelocityBlend(const float DeltaTime);
 
 	void RefreshRotationYawOffsets();
