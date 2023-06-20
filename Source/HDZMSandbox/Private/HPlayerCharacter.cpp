@@ -18,10 +18,6 @@ AHPlayerCharacter::AHPlayerCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ComSpringArm = CreateDefaultSubobject<USpringArmComponent>("HPlaComSpringArm");
-	ComSpringArm->SetupAttachment(GetRootComponent());
-	ComSpringArm->TargetArmLength = 400.f;
-	ComSpringArm->bUsePawnControlRotation = true;
 
 	//Camera default value:
 	//
@@ -40,9 +36,11 @@ AHPlayerCharacter::AHPlayerCharacter()
 	// 	bAutoActivate = true;
 	// 	bLockToHmd = true;
 
-	ComCamera = CreateDefaultSubobject<UCameraComponent>("HPlaComCamera");
-	ComCamera->SetupAttachment(ComSpringArm);
-	ComCamera->SetFieldOfView(120);
+
+	ComAlsCamera = CreateDefaultSubobject<UAlsCameraComponent>(TEXT("AlsCamera"));
+	ComAlsCamera->SetupAttachment(GetMesh());
+	ComAlsCamera->SetRelativeRotation_Direct({ 0.0f, 90.0f, 0.0f });
+
 	//test and set in BP
 	//@check UCharacterMovementComponent .h 
 
@@ -50,78 +48,191 @@ AHPlayerCharacter::AHPlayerCharacter()
 	ComActions = CreateDefaultSubobject<UHActionComponent>("HPlaComAction");
 	ComAttribute = CreateDefaultSubobject<UHAttributeComponent>("HPlaComAttribute");
 
-	ComEmitter = CreateDefaultSubobject<UHEmitterComponent>("HPlaComEmitter");
 
 	ComSphereCollision = CreateDefaultSubobject<USphereComponent>("HPlaComSphereCollision");
 	ComSphereCollision->SetupAttachment(GetRootComponent());
-
-	ComEmitterMoveController  = CreateDefaultSubobject<USphereComponent>("HPlaComEmitterMoveController");
-	ComEmitterMoveController->SetupAttachment(GetRootComponent());
-
-	ComEmitterLocation = CreateDefaultSubobject<USceneComponent>("HPlaComEmiiterPostion");
-	ComEmitterLocation->SetupAttachment(ComEmitterMoveController);
-
-	EmitterMoveRadiance = 150.f;
-	EmitterMoveOffSet = FVector(0.f,0.f,7.f);
-	EmitterDirectionOffSet = FRotator(0.f,10.f,10.f);
-
-	ComEmitterDireation = CreateDefaultSubobject<UArrowComponent>("HPlaComEmitterDireation");
-	ComEmitterDireation->SetupAttachment(ComEmitterLocation);
-	ComEmitterDireation->SetHiddenInGame(false);
-	ComEmitterDireation->SetRelativeTransform(FTransform::Identity);
 
 
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
-	ComEmitterMoveController->SetSphereRadius(EmitterMoveRadiance, true);
-	ComEmitterMoveController->SetRelativeLocation(EmitterMoveOffSet);
 
 }
 
 void AHPlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	ComEmitterLocation->SetRelativeLocation(FVector(EmitterMoveRadiance, 0.f, 0.f));
+
 
 }
+
+void AHPlayerCharacter::CalcCamera(const float DeltaTiem, FMinimalViewInfo& ViewInfo)
+{
+	if (!ComAlsCamera->IsActive())
+	{
+		Super::CalcCamera(DeltaTiem,ViewInfo);
+		return;
+	}
+	ComAlsCamera->GetViewInfo(ViewInfo);
+}
+
 
 // Called to bind functionality to input
 void AHPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &AHPlayerCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AHPlayerCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("ChangeCore", this, &AHPlayerCharacter::ChangeCore);
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AHPlayerCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AHPlayerCharacter::MoveRight);
 
 	//AddControllerYawInput at Apawn
 	//you should open "Use Pawn Control Rotation" at springArmCom to allow playerController to controll arm
-	PlayerInputComponent->BindAxis("MouseX", this, &AHPlayerCharacter::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("MouseY", this, &AHPlayerCharacter::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis(TEXT("LookRightMouse"), this, &AHPlayerCharacter::OnLookRight);
+	PlayerInputComponent->BindAxis(TEXT("LookUpMouse"), this, &AHPlayerCharacter::OnLookUp);
 	
-	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::StartJump);
-	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Released,this, &AHPlayerCharacter::StopJump);
-	
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed,this, &AHPlayerCharacter::StartCrouch);
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released,this, &AHPlayerCharacter::StopCrouch);
-	
-	PlayerInputComponent->BindAction("PrimaryAttack",IE_Pressed,this,&AHPlayerCharacter::OnTriggerPressed);
-	PlayerInputComponent->BindAction("PrimaryAttack",IE_Released,this,&AHPlayerCharacter::OnTriggerReleased);
+	PlayerInputComponent->BindAction("Trigger",IE_Pressed,this,&AHPlayerCharacter::OnTriggerPressed);
+	PlayerInputComponent->BindAction("Trigger",IE_Released,this,&AHPlayerCharacter::OnTriggerReleased);
 	
 	PlayerInputComponent->BindAction("RestoreEnergy",IE_Pressed,this,&AHPlayerCharacter::OnStartRestoreEnergy);
 	PlayerInputComponent->BindAction("RestoreEnergy",IE_Released,this,&AHPlayerCharacter::OnStopedRestoreEnergy);
+
+	PlayerInputComponent->BindAction(TEXT("Aim"), IE_Pressed, this, &AHPlayerCharacter::OnAimPressed);
+	PlayerInputComponent->BindAction(TEXT("Aim"), IE_Released, this, &AHPlayerCharacter::OnAimReleased);
+
+
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &AHPlayerCharacter::OnSprintPressed);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &AHPlayerCharacter::OnSprintReleased);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_DoubleClick, this, &AHPlayerCharacter::OnRoll);
+
+	PlayerInputComponent->BindAction(TEXT("Walk"), IE_Pressed, this, &AHPlayerCharacter::OnWalk);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &AHPlayerCharacter::OnCrouch);
+
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &AHPlayerCharacter::OnJumpPressed);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &AHPlayerCharacter::OnJumpReleased);
+
+}
+
+void AHPlayerCharacter::OnAimPressed()
+{
+	SetDesiredAiming(true);
+}
+
+void AHPlayerCharacter::OnAimReleased()
+{
+	SetDesiredAiming(false);
+}
+
+void AHPlayerCharacter::OnLookUp(float val)
+{
+	AddControllerPitchInput(-val);
+}
+
+void AHPlayerCharacter::OnLookRight(float val)
+{
+
+	AddControllerYawInput(val);
+}
+
+
+void AHPlayerCharacter::OnWalk()
+{
+	if (GetWorldTimerManager().TimerExists(SprintStartTimer))
+	{
+		return;
+	}
+
+	// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+	// ReSharper disable once CppIncompleteSwitchStatement
+	switch (GetDesiredGait())
+	{
+	case EAlsGait::Walking:
+		SetDesiredGait(EAlsGait::Running);
+		break;
+
+	case EAlsGait::Running:
+		SetDesiredGait(EAlsGait::Walking);
+		break;
+	}
+}
+
+void AHPlayerCharacter::OnCrouch()
+{
+	switch (GetDesiredStance())
+	{
+	case EAlsStance::Standing:
+		SetDesiredStance(EAlsStance::Crouching);
+		break;
+
+	case EAlsStance::Crouching:
+		SetDesiredStance(EAlsStance::Standing);
+		break;
+	}
+}
+
+void AHPlayerCharacter::OnJumpPressed()
+{
+	if (TryStopRagdolling())
+	{
+		return;
+	}
+
+	if (TryStartMantlingGrounded())
+	{
+		return;
+	}
+
+	if (GetStance() == EAlsStance::Crouching)
+	{
+		SetDesiredStance(EAlsStance::Standing);
+		return;
+	}
+
+	Jump();
+}
+
+void AHPlayerCharacter::OnJumpReleased()
+{
+	StopJumping();
+}
+
+void AHPlayerCharacter::OnSprintPressed()
+{
+	// Start the sprint with a slight delay to give the player enough time to start the roll with a double click instead.
+
+	static constexpr auto StartDelay{ 0.1f };
+
+	GetWorldTimerManager().SetTimer(SprintStartTimer,
+		FTimerDelegate::CreateWeakLambda(this, [this]
+			{
+				SetDesiredGait(EAlsGait::Sprinting);
+			}), StartDelay, false);
+}
+
+void AHPlayerCharacter::OnSprintReleased()
+{
+	if (GetWorldTimerManager().TimerExists(SprintStartTimer))
+	{
+		GetWorldTimerManager().ClearTimer(SprintStartTimer);
+	}
+
+	else
+	{
+		SetDesiredGait(EAlsGait::Running);
+	}
+}
+
+void AHPlayerCharacter::OnRoll()
+{
+	GetWorldTimerManager().ClearTimer(SprintStartTimer);
+	static constexpr auto PlayRate{ 1.3f };
+	TryStartRolling(PlayRate);
+
 }
 
 void AHPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	FVector EmitterLocation = ComEmitterMoveController->GetRelativeLocation() + GetActorLocation() + GetControlRotation().Vector() * EmitterMoveRadiance ;
-	FRotator EmitterRotation = (GetControlRotation() + EmitterDirectionOffSet).GetNormalized();
-	ComEmitterLocation->SetWorldLocation(EmitterLocation);
-	ComEmitterLocation->SetWorldRotation(EmitterRotation);
 
 }
 
@@ -139,37 +250,22 @@ void AHPlayerCharacter::OnStartRestoreEnergy()
 }
 
 
-void AHPlayerCharacter::StartJump()
-{
-	Super::Jump();
-	bJumpButtonDown = CanJump();
-	DispatchJumpData();
-
-}
-
-void AHPlayerCharacter::StopJump()
-{
-	Super::StopJumping();
-	bJumpButtonDown = false;
-	DispatchJumpData();
-}
-
-void AHPlayerCharacter::DispatchJumpData()
-{
-	UCharacterMovementComponent* ComCM = GetCharacterMovement();
-	if (ComCM)
-	{
-		ComCM->JumpZVelocity = 400.f;
-	}
-}
-
 void AHPlayerCharacter::OnTriggerPressed()
 {
+	if ( GetDesiredRotationMode() == EAlsRotationMode::Aiming)
+	{
+		ShootType = EHShootType::BackwardShoot;
+	}
+	else ShootType = EHShootType::ForwardShoot;
+
 	ComActions->StartActionByName(this, TEXT("TriggerEmitter"));
 }
 
 void AHPlayerCharacter::OnTriggerReleased()
 {
+
+	ShootType = EHShootType::None;
+	
 	ComActions->StopActionByName(this, TEXT("TriggerEmitter"));
 
 }
@@ -194,9 +290,12 @@ void AHPlayerCharacter::MoveForward(float val)
 	AddMovementInput(controlRot.Vector(), val);
 }
 
-void AHPlayerCharacter::ChangeCore(float val)
+void AHPlayerCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& Unused, float& VerticalPosition)
 {
-	if (val)
-		ComEmitter->SlideCore(val);
+	if (ComAlsCamera->IsActive())
+	{
+		ComAlsCamera->DisplayDebug(Canvas, DebugDisplay, VerticalPosition);
+	}
 
+	Super::DisplayDebug(Canvas, DebugDisplay, Unused, VerticalPosition);
 }

@@ -102,11 +102,11 @@ FTransform UHEmitterComponent::GetDefaultMuzzleTransform()
 	AHPlayerCharacter* player = Cast<AHPlayerCharacter>(GetOwner());
 	if (player)
 	{
-		USceneComponent* EmitterMove = player->GetEmitterMoveComp();
-		if (ensure(EmitterMove))
-		{
-			return player->GetEmitterMoveComp()->GetComponentTransform();
-		}
+// 		USceneComponent* EmitterMove = player->GetEmitterMoveComp();
+// 		if (ensure(EmitterMove))
+// 		{
+// 			return player->GetEmitterMoveComp()->GetComponentTransform();
+// 		}
 	}
 	return FTransform(GetOwner()->GetActorRotation(), GetOwner()->GetActorLocation() + 80*GetOwner()->GetActorForwardVector());
 

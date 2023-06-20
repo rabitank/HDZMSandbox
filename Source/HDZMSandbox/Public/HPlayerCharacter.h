@@ -5,10 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "HBulletBase.h"
+#include "State/HShootType.h"
+#include "AlsCharacter.h"
+#include "AlsCameraComponent.h"
 #include "HPlayerCharacter.generated.h"
 
-UCLASS()
-class HDZMSANDBOX_API AHPlayerCharacter : public ACharacter
+UCLASS(Blueprintable)
+class HDZMSANDBOX_API AHPlayerCharacter : public AAlsCharacter
 {
 	GENERATED_BODY()
 
@@ -16,30 +19,15 @@ public:
 	// Sets default values for this character's properties
 	AHPlayerCharacter();
 
-protected:
-	UPROPERTY( EditAnywhere,BlueprintReadWrite, Category = "Anim Control")
-		bool bCrouchButtonDown;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Anim Control")
-		bool bJumpButtonDown;
+private:
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
-		float EmitterMoveRadiance;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
-		FVector EmitterMoveOffSet;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Emitter")
-		FRotator EmitterDirectionOffSet;
+	FTimerHandle SprintStartTimer;
 
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Components")
-		class USpringArmComponent* ComSpringArm;
-	
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Meta = (AllowPrivateAccess))
+		class UAlsCameraComponent* ComAlsCamera;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class UCameraComponent* ComCamera;
-	
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UHActionComponent* ComActions;
 	
@@ -47,45 +35,49 @@ protected:
 		class UHAttributeComponent* ComAttribute;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class UHEmitterComponent* ComEmitter;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class USphereComponent* ComSphereCollision;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class USceneComponent* ComEmitterLocation;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class USphereComponent* ComEmitterMoveController;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class UArrowComponent* ComEmitterDireation;
+
+	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
+		EHShootType ShootType{EHShootType::None};
+
+
 
 protected:
 	void MoveRight(float val);
 	void MoveForward(float val);
-	void ChangeCore(float val);
 
-	void StartCrouch() { bCrouchButtonDown= true; };
-	void StopCrouch() { bCrouchButtonDown = false; };
+	void OnLookUp(float val);
+	void OnLookRight(float val);
 
-	void StartJump();
-	void StopJump();
-	void DispatchJumpData();
 	void OnTriggerPressed();
 	void OnTriggerReleased();
 
 	void OnStopedRestoreEnergy();
 	void OnStartRestoreEnergy();
 
+	void OnAimPressed();
+	void OnAimReleased();
+
+
+
+	void OnWalk();
+	void OnCrouch();
+	void OnJumpPressed();
+	void OnJumpReleased();
+
+	void OnSprintPressed();
+	void OnSprintReleased();
+	void OnRoll();
+
+	virtual void CalcCamera (const float DeltaTiem, FMinimalViewInfo& ViewInfo) override;
 
 public:	
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) ;
+	virtual void Tick(float DeltaTime) ;
 
-	virtual void PostInitializeComponents() override;
-	
-	USceneComponent* GetEmitterMoveComp() { return ComEmitterLocation; };
+	virtual void PostInitializeComponents();
 
+public:
+	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& Unused, float& VerticalPosition) override;
 };
