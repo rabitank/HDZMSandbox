@@ -115,13 +115,13 @@ void AHPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void AHPlayerCharacter::OnAimPressed()
 {
-	EmitterAiming = true;
+	bEmitterAiming = true;
 	SetDesiredAiming(true);
 }
 
 void AHPlayerCharacter::OnAimReleased()
 {
-	EmitterAiming = false;
+	bEmitterAiming = false;
 	SetDesiredAiming(false);
 }
 
@@ -254,7 +254,7 @@ void AHPlayerCharacter::OnStartRestoreEnergy()
 
 void AHPlayerCharacter::OnTriggerPressed()
 {
-	if ( EmitterAiming )
+	if ( bEmitterAiming )
 	{
 		ShootType = EHShootType::BackwardShoot;
 	}

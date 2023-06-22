@@ -42,7 +42,7 @@ protected:
 		EHShootType ShootType{EHShootType::None};
 	
 	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
-		bool EmitterAiming{false};
+		bool bEmitterAiming{false};
 	
 
 
@@ -79,11 +79,15 @@ protected:
 
 public:	
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) ;
-	virtual void Tick(float DeltaTime) ;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
 
-	virtual void PostInitializeComponents();
+	virtual void PostInitializeComponents() override;
 
-public:
 	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& Unused, float& VerticalPosition) override;
+public:
+	inline EHShootType GetShootType() const { return ShootType; };
+	inline bool GetIsEmitterAiming() const { return bEmitterAiming; };
+
+
 };
