@@ -26,10 +26,11 @@ private:
 
 protected:
 
-	UPROPERTY(BlueprintReadWrite, Category = "Reference")
+	//initialize in native already!
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Reference")
 	class APlayerController* OwnerController;
  
-	UPROPERTY(BlueprintReadWrite, Category = "Reference")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Reference")
 	class AHPlayerCharacter* OwnerPawn;
 
 	
@@ -135,6 +136,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 
 public:	
 	// Called every frame

@@ -19,36 +19,31 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		class UStaticMeshComponent* ComMesh;
+		class USphereComponent* ComSphere;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		class UProjectileMovementComponent* ComMovement;
 	
 protected:
 	//UPROPERTY(EditDefaultsOnly, Category = "Bullet")
 	//	class UCurveFloat* ContainEnergyCurve;
 
 
-	//让bullet仅持有必要的运动数据, 剩下的交由Name调用其他.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
-	FName BulletName;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet")
+	float RecoilForce;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet")
+	float InitialSpeed;
 
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	float LinearVelocity;
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	float LinearAcceleration;
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	float MaxLinearVeclocity;
-
-	UPROPERTY( VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	float AngularVelocity;
-	UPROPERTY(VisibleAnywhere, EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	FVector AngularAxis {-1.f,0.f,0.f};
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
-	float AngularAcceleration{0.f};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bullet | Energy")
+	float CurrentContainEnergy;
 	
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bullet")
+	float FlyStartedTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet")
-		float LifeDuration{10.f};
-
-
+	float LifeDuration;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet")
 	FTimerHandle TimeHandle_FadeAway;
 	
@@ -66,6 +61,8 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void Exploed();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void ApplyRecoilForce();
 
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	//	class UParticleSystemComponent* ComEffectParticle;

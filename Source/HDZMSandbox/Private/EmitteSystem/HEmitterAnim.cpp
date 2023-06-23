@@ -40,7 +40,16 @@ void UHEmitterAnim::UpdateState()
 
 void UHEmitterAnim::NativeUpdateAnimation(float DeltaSeconds)
 {
-
-	if (!OwningEmitter) return;
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	if (!IsValid(OwningEmitter)) return;
 	UpdateState();
+}
+
+void UHEmitterAnim::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	OwningEmitter = Cast<AHEmitter>(GetOwningActor());
+	if(IsValid(OwningEmitter))
+		ControledCharacter = OwningEmitter->OwnerPawn;
+
 }

@@ -16,19 +16,33 @@ AHBulletBase::AHBulletBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ComMesh = CreateDefaultSubobject<UStaticMeshComponent>("BulletMesh");
-	RootComponent = ComMesh;
+	ComSphere = CreateDefaultSubobject<USphereComponent>(TEXT("HBulComSphere"));
+	RootComponent = ComSphere;
 
 	//Created CollisionProfile "Projectile" in Engine-Collision
-	ComMesh->SetCollisionProfileName("Projectile");
-	ComMesh->OnComponentHit.AddDynamic(this, &AHBulletBase::OnActorHit);
+	ComSphere->SetCollisionProfileName("Projectile");
+	ComSphere->OnComponentHit.AddDynamic(this, &AHBulletBase::OnActorHit);
 
 	//collision APi etc:
 	//ComSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	//ComSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 
 	//more information view:https://www.unrealengine.com/zh-CN/blog/collision-filtering
+
+	ComMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("HBulComProjectileMovement"));
+	ComMovement->bRotationFollowsVelocity = true;
+	ComMovement->bInitialVelocityInLocalSpace = true;
+	ComMovement->ProjectileGravityScale = 0.f;
+
+	ComMovement->bAutoActivate = true;
+
+	InitialSpeed = 8000.f;
+	ComMovement->InitialSpeed = InitialSpeed;
+	RecoilForce = 1000000.f;
+
+	CurrentContainEnergy = 10.f;
 	
+	LifeDuration = 10.f;
 	bCanFadeAway = false;
 
 //	ComEffectParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SProComParticleSystem"));
@@ -39,6 +53,8 @@ AHBulletBase::AHBulletBase()
 void AHBulletBase::BeginPlay()
 {
 	Super::BeginPlay();
+	FlyStartedTime = GetWorld()->GetTimeSeconds();
+	ApplyRecoilForce();
 	if(bCanFadeAway)
 		GetWorld()->GetTimerManager().SetTimer(TimeHandle_FadeAway,this,&AHBulletBase::FadeAway,LifeDuration,false);
 	else
@@ -67,9 +83,6 @@ void AHBulletBase::ApplyRecoilForce_Implementation()
 
 void AHBulletBase::OnActorHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& hit)
 {
-
-	//temp 
-	//@TODO: 将来交给Manager管理.
 	if (OtherActor && OtherActor == GetInstigator())
 	{
 		return;
@@ -107,15 +120,6 @@ void AHBulletBase::Exploed_Implementation()
 void AHBulletBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	LinearVelocity = FMath::Clamp(LinearVelocity + LinearAcceleration * DeltaTime, -MaxLinearVeclocity, MaxLinearVeclocity);
-	AngularVelocity += AngularAcceleration * DeltaTime;
-
-	AddActorLocalOffset(GetActorForwardVector() * LinearVelocity*DeltaTime , false);
-	AddActorLocalRotation(FQuat(GetActorForwardVector(),AngularVelocity*DeltaTime),false);
-	
 
 }
-
-
 

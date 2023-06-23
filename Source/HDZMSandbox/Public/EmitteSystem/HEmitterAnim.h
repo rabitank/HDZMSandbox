@@ -59,6 +59,6 @@ private:
 
 public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override; // 原生动画更新点. 自己去看源码.
-
+	virtual void NativeInitializeAnimation() override;
 
 };

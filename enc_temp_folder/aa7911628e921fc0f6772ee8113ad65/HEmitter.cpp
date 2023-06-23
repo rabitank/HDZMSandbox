@@ -10,7 +10,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 void AHEmitter::UpdateEssentialValues()
 {
@@ -45,21 +44,13 @@ void AHEmitter::UpdateEmitterBehaviour()
 		+ UKismetMathLibrary::GetRightVector(PivotTransform.Rotator()) * GetEmitterCurveValue(Curve_PivotYOffset);
 	
 	//当瞄准时使用controller的Rotator, 避免因为视线击中物体的不同导致不稳定变化.
-	 if (!bIsAim) UpdateAimRotator(SmoothedTargetPivotLocation);
+	if (!bIsAim) UpdateAimRotator(SmoothedTargetPivotLocation);
 	else AimingRotator = OwnerController->GetControlRotation();
 
 	//Emitter的期望旋转
 	if (bIsAim)
 	{
-		if (bHasMovementInput)
-		{
-			TargetRotator = GetAimBackRotatorWithMoveInputFac();
-		}
-		else
-		{ 
-			TargetRotator =  GetAimBackRotatorWithControlFac();
-		}
-		
+		TargetRotator = bHasMovementInput ? GetAimBackRotatorWithMoveInputFac() : GetAimBackRotatorWithControlFac();
 	}
 	else TargetRotator = AimingRotator;
 
@@ -73,36 +64,13 @@ void AHEmitter::UpdateEmitterBehaviour()
 	const float AnimScaledFac{ GetEmitterCurveValue(Curve_ScaledFac) };
 
 	FHitResult hitresult;
-// 	FCollisionQueryParams collisionParameters;
-// 
-// 	collisionParameters.AddIgnoredActor(OwnerPawn);
-
-
-// 	// 起始点和检测结果
-// FVector BeginLoc = GetActorLocation();
-// FVector EndLoc = BeginLoc + GetActorForwardVector() * 1000;
-// FHitResult HitResult;
-//  
-// // 要忽略的物体
-// TArray<AActor*> IgnoreActors;	
-// 	
-// 	// 射线检测
-// bool bIsHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), BeginLoc, EndLoc, TraceTypeQuery1, false, IgnoreActors, EDrawDebugTrace::ForDuration, HitResult, true);
-// if (bIsHit)
-// {
-// 	UKismetSystemLibrary::PrintString(GetWorld(), HitResult.GetActor()->GetName());
-// }
-
-
-	TArray<AActor*> IgnoreActors{OwnerPawn};
-
-
-
-	if (UKismetSystemLibrary::SphereTraceSingle(GetWorld(), SmoothedTargetPivotLocation, endP, EmitterRadius*AnimScaledFac, TraceTypeQuery1, false, IgnoreActors,
-		EDrawDebugTrace::ForOneFrame, hitresult, true) )
+	FCollisionQueryParams collisionParameters;
+	collisionParameters.AddIgnoredActor(OwnerPawn);
+	if (GetWorld()->SweepSingleByChannel(hitresult, SmoothPivotLocation, endP, FQuat::Identity,
+		ECollisionChannel::ECC_Visibility, CollisionShape, collisionParameters))
 	{
-		TargetDistance = hitresult.Distance > 40.f ? hitresult.Distance - 10.f : 30.f;
-		FinalScaleFac  = FMath::Lerp(0.5, 1.0, hitresult.Time) * AnimScaledFac;
+		TargetDistance = hitresult.Distance > 50.f ? hitresult.Distance - 10.f : 40.f;
+		FinalScaleFac  = FMath::Lerp(0.3, 1.0, hitresult.Time) * AnimScaledFac;
 	}
 	else
 	{
@@ -131,8 +99,7 @@ void AHEmitter::UpdateAimRotator(FVector CurrentTargetPivotLocation)
 	FHitResult hitresult;
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(OwnerPawn);
-	queryParams.AddIgnoredActor(this);
-
+	queryParams.AddIgnoredActor(OwnerPawn);
 	if (GetWorld()->LineTraceSingleByChannel(hitresult, StartP, endP, ECC_Visibility, queryParams) && hitresult.IsValidBlockingHit())
 	{
 		endP = hitresult.Time>0.5f ? hitresult.Location : CameraLocation + UKismetMathLibrary::GetForwardVector(CameraRotation) * 5000;
@@ -143,7 +110,7 @@ void AHEmitter::UpdateAimRotator(FVector CurrentTargetPivotLocation)
  
 void AHEmitter::InitInputBind()
 {
-	InputComponent->BindAxis("AdjustPitch",this,&AHEmitter::OnWheelSlide);
+	InputComponent->BindAxisKey("AdjustPitch",this,&AHEmitter::OnWheelSlide);
 }
 
 void AHEmitter::OnWheelSlide(float val)
@@ -157,16 +124,10 @@ inline FRotator AHEmitter::GetAimBackRotatorWithMoveInputFac()
 {
 	const auto InputRot{ UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::MakeRotFromX(InputAcceleration),CharacterRotator) };
 
-	const float tempYaw{
-		FMath::Clamp(
-			InputRot.Yaw + FMath::GetMappedRangeValueClamped(
-					{ -90.f,90.f }, { -15.f,15.f }, UKismetMathLibrary::NormalizedDeltaRotator(AimingRotator, InputRot).Yaw
-				)+180.f
-			,80.f,290.f)
-		 };
-	return FRotator(EnteringAimingPitch, ((tempYaw > 275.f || tempYaw < 85.f) ? 180.f : tempYaw) + CharacterRotator.Yaw ,CharacterRotator.Roll );
-
-	//@Attention: FRotator的构造顺序是Pitch Yaw Roll. 和蓝图的roll pitch yaw 不一样.
+	const auto tempYaw{ FMath::Clamp(InputRot.Yaw +
+		FMath::GetMappedRangeValueClamped({ -90,90 }, { -15,15 }, UKismetMathLibrary::NormalizedDeltaRotator(AimingRotator, InputRot).Yaw)
+	,80.f,290.f)+180.f };
+	return { CharacterRotator.Roll,EnteringAimingPitch,  (tempYaw > 275 || tempYaw < 85 ? 180.f : tempYaw) + CharacterRotator.Yaw };
 }
 
 inline FRotator AHEmitter::GetAimBackRotatorWithControlFac()
@@ -175,7 +136,7 @@ inline FRotator AHEmitter::GetAimBackRotatorWithControlFac()
 	FMath::GetMappedRangeValueClamped({ -90.f,90.f }, { -60.f,60.f}, UKismetMathLibrary::NormalizedDeltaRotator(AimingRotator,CharacterRotator).Yaw)
 	+ 180.f + CharacterRotator.Yaw
 	};
-	return  FRotator(EnteringAimingPitch, tempYaw, CharacterRotator.Roll);
+	return { CharacterRotator.Roll,EnteringAimingPitch, tempYaw};
 }
 
 inline FVector AHEmitter::CaculateAxisIndepentLag(FVector CurrentLocation, FVector TargetLocation, FRotator InputTargetRotator, FVector LagSpeed /*= FVector(14,14,16) */)
@@ -220,14 +181,7 @@ AHEmitter::AHEmitter()
 void AHEmitter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	OwnerPawn = Cast<AHPlayerCharacter>(GetOwner());
-	if (ensure(OwnerPawn))
-	{
-		OwnerController = Cast<APlayerController>(OwnerPawn->GetController());
-		EnableInput(OwnerController); //接受输入/输入会传播给Emitter;
-	};
-
+	 
 	//EnableInput(OwnerController); //接受输入/输入会传播给Emitter;
 	InitInputBind();
 
@@ -238,6 +192,12 @@ void AHEmitter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	OwnerPawn = Cast<AHPlayerCharacter>(GetOwner());
+	if (ensure(OwnerPawn))
+	{
+		OwnerController = Cast<APlayerController>(OwnerPawn->GetController());
+		EnableInput(OwnerController); //接受输入/输入会传播给Emitter;
+	};
 }
 
 // Called every frame
@@ -257,7 +217,7 @@ void AHEmitter::Tick(float DeltaTime)
 	{
 		if (bIsAim != bPreIsAim) //Changed to true;
 		{
-			EnteringAimingPitch = GetActorRotation().Pitch * -1.f;
+			EnteringAimingPitch = GetActorRotation().Yaw * -1.f;
 		}
 
 	}
