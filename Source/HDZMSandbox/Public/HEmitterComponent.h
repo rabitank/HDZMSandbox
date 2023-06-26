@@ -8,7 +8,9 @@
 #include "Delegates/DelegateCombinations.h"
 #include "HEmitterComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShootingStateChanged, class UHEmitterCoreBase*, thisCore, class AActor*, instigatorActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShootingStateChanged, class AHEmitterPattern*, thisCore, class AActor*, instigatorActor);
+
+class AHEmitterPattern;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HDZMSANDBOX_API UHEmitterComponent : public UActorComponent
@@ -26,47 +28,64 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
 		FName DefaultMuzzelSocketName;
 
-	UPROPERTY(EditAnywhere, Category = "Emitter")
-		int32 CoreSlotsNum;
+	UPROPERTY(EditDefaultsOnly,  Category = "Emitter | Init")
+	TSubclassOf<AHEmitterPattern> BKEpClass ;
+	UPROPERTY(EditDefaultsOnly, Category = "Emitter | Init")
+	TSubclassOf<AHEmitterPattern> FWEpClass ;
 
-	UPROPERTY(EditAnywhere, Category = "Emitter")
-		TArray<TSubclassOf<UHEmitterCoreBase>> DefaultEmitterCoreClass;
-
-	UPROPERTY(VisibleAnywhere,Category = "Emitter")
-	TArray<UHEmitterCoreBase*> EmitterCores;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
-	UHEmitterCoreBase* CurrentCore;
-	
+	AHEmitterPattern* CurrentPattern;
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
-	float CurrentCoreIndex;
+	AHEmitterPattern* BKEmittePattern;
+	UPROPERTY(VisibleAnywhere, Category = "Emitter")
+	AHEmitterPattern* FWEmittePattern;
+	
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite, Category = "Emitter")
+	class AHEmitter* OwnerEmitter ;
+
 
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
-	bool bIsTriggering;
+		bool bIsTriggering{false};
+	UPROPERTY(VisibleAnywhere, Category = "Emitter")
+		bool bAbleShoot{false};
 
 public:
 
-	//return UHEC for showing Info of Core when changed to an new core
-	//for user use mouse slide to change core
-	UFUNCTION(BlueprintCallable)
-	UHEmitterCoreBase* SlideCore(float val);
-	
-	//for user use numpad to change core
-	UFUNCTION(BlueprintCallable)
-	UHEmitterCoreBase* SelectedCoreByNum(int val);
 
-	UFUNCTION(BlueprintCallable)
-		UHEmitterCoreBase* GetCurrentCore() { return CurrentCore; };
+	/// <summary>
+	/// @描述: 交换Bk 和 FW使用的Ep. 不会很常用的
+	/// </summary>
+	UFUNCTION(BlueprintCallable ,Category="EmitterModify")
+	void SwitchPattern();
 	
+	/// <summary>
+	/// @描述: 切换瞄准状态, 即对应Emitter的Aiming. 激活某FW/BK
+	/// </summary>
+	UFUNCTION(BlueprintCallable)
+	void OnSwitchAimingState();
+	
+	/// <summary>
+	/// @描述: 切换FW的Ep, 即改变FWEp.
+	/// </summary>
+	UFUNCTION(BlueprintCallable, Category = "EmitterModify")
+	bool ChangeFWEp(TSubclassOf<AHEmitterPattern> newPattern,AActor* instigator);
+	
+	/// <summary>
+	/// @描述:传达开火.
+	/// </summary>
+	/// <param name="instegator"></param>
+	/// <returns> 返回是否通过 </returns>
+	UFUNCTION(BlueprintCallable)
+	bool Shoot(AActor* instegator);
 
 	UFUNCTION()
-	FTransform GetDefaultMuzzleTransform();
+		void DelayInitPattern_Elaps (AHEmitterPattern* EpIns);
 
-	UFUNCTION(BlueprintCallable, Category = "Emitter")
-		void AddCore(AActor* Instigator, TSubclassOf<UHEmitterCoreBase> CoreClass);
 
-	UFUNCTION(BlueprintCallable, Category = "Emitter")
-		class UHEmitterCoreBase* GetCore(TSubclassOf<UHEmitterCoreBase> CoreClass);
+	//class UHEmitterPattern* GetPattern(TSubclassOf<UHEmitterPattern> PatternClass);
+	
 
 	//UFUNCTION(BlueprintCallable, Category = "Actions")
 	//bool StopCoreByName(AActor* Instigator, FName CoreName);
@@ -95,9 +114,13 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/// <summary>
+	/// 暂时留存吧.可能需要加上响应的蒙太奇动画.
+	/// </summary>
 	FOnShootingStateChanged OnShootStarted;
 	FOnShootingStateChanged OnShootStoped;
 
-
+	UFUNCTION(BlueprintCallable)
+		bool SpawnAndInitPatternWithDelay(TSubclassOf<AHEmitterPattern> pattern, AHEmitterPattern*& patternIns,float delay=0.2f);
 		
 };

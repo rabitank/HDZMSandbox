@@ -3,12 +3,13 @@
 
 #include "HEmitterComponent.h"
 #include "HEmitInterface.h"
-#include "HEmitterCoreBase.h"
 #include "../HDZMSandbox.h"
 #include "HAttributeComponent.h"
 #include "HPlayerCharacter.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Components/StaticMeshComponent.h"
+#include <EmitteSystem/HEmitter.h>
+#include "EmitteSystem/HEmitterPattern.h"
 
 // Sets default values for this component's properties
 UHEmitterComponent::UHEmitterComponent()
@@ -18,12 +19,6 @@ UHEmitterComponent::UHEmitterComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	// ...
 
-	bIsTriggering = false;
-
-	DefaultMuzzelSocketName = TEXT("Muzzle");
-	CoreSlotsNum = 1;
-
-	CurrentCoreIndex = 0;
 }
 
 // Called when the game starts
@@ -31,166 +26,144 @@ void UHEmitterComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//init Core
-	for (TSubclassOf<UHEmitterCoreBase> EmitCoreClass : DefaultEmitterCoreClass)
-	{
-		AddCore(GetOwner(), EmitCoreClass); //defalut USAction SubAction(bp subInstanceClass)
-	}
-	CurrentCoreIndex = EmitterCores.Num()-1;
+	OwnerEmitter = Cast<AHEmitter>(GetOwner());
+	LogOnScreen(this, "HEmitterCompoenntInit", FColor::Red);
+	//init 
+	SpawnAndInitPatternWithDelay(BKEpClass, BKEmittePattern);
+	SpawnAndInitPatternWithDelay(FWEpClass, FWEmittePattern);
 
-	// ...
+	FWEmittePattern->PatternActive();
+	BKEmittePattern->PatternRelax();
+	CurrentPattern = FWEmittePattern;
+
+
+}
+
+
+bool UHEmitterComponent::SpawnAndInitPatternWithDelay(TSubclassOf<AHEmitterPattern> pattern,AHEmitterPattern*& patternIns, float delay/*=0.2f*/)
+{
+
+	if (pattern)
+	{
+		FActorSpawnParameters PatternParams;
+		PatternParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+
+		//@Discribtion: Instigator will pass to sender by getInstigator /¼´Apawn ->Player
+		PatternParams.Instigator = GetOwner()->GetInstigator();
+		patternIns = GetWorld()->SpawnActor<AHEmitterPattern>(pattern, OwnerEmitter->GetActorLocation(), OwnerEmitter->GetActorRotation(), PatternParams);
+		if (ensure(patternIns))
+		{
+			patternIns->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+
+
+			FTimerHandle TimerHandle_InitEmitterPattern;
+			FTimerDelegate delegate;
+			delegate.BindUFunction(this, "DelayInitPattern_Elaps", patternIns);
+
+			GetOwner()->GetWorldTimerManager().SetTimer(TimerHandle_InitEmitterPattern, delegate, delay, false);
+
+		};
+
+		return true;
+	}
+	UE_LOG(LogTemp,Warning,TEXT("EmptyPattern can't be Init!"));
+	return false;
+}
+
+void UHEmitterComponent::DelayInitPattern_Elaps(AHEmitterPattern* EpIns)
+{
+	EpIns->InitPattern();
+	bAbleShoot = true;
+}
+
+
+void UHEmitterComponent::SwitchPattern()
+{
+
+	check(BKEmittePattern);
+	check(FWEmittePattern);
+
+	BKEmittePattern->PatternRelax();
+	FWEmittePattern->PatternRelax();
 	
+	auto newPattern = BKEmittePattern;
+	BKEmittePattern = FWEmittePattern;
+	FWEmittePattern = newPattern;
+	
+	if (OwnerEmitter->IsBackward())
+	{
+		CurrentPattern = BKEmittePattern;
+		BKEmittePattern->PatternActive();
+
+	}
 }
 
-
-UHEmitterCoreBase* UHEmitterComponent::SlideCore(float val)
+void UHEmitterComponent::OnSwitchAimingState()
 {
-	if ( bIsTriggering && CurrentCore->IsShooting())
+	CurrentPattern->PatternRelax();
+	if (CurrentPattern == FWEmittePattern)
 	{
-		return nullptr;
+		BKEmittePattern->PatternActive();
+		CurrentPattern = BKEmittePattern;
 	}
-	if (EmitterCores.Num()<2)
+	else
 	{
-		return nullptr;
+		FWEmittePattern->PatternActive();
+		CurrentPattern = FWEmittePattern;
 	}
-	float OldIndex = CurrentCoreIndex;
-	CurrentCoreIndex += val;
-	if (floor(CurrentCoreIndex) != floor(OldIndex))
-	{
-		if (floor(CurrentCoreIndex) >= EmitterCores.Num())
-		{
-			CurrentCoreIndex = 0;
-			CurrentCore = *EmitterCores.begin();
-		}
-		else if (floor(CurrentCoreIndex) < 0)
-		{
-			CurrentCoreIndex = EmitterCores.Num() - 1;
-			CurrentCore = EmitterCores.Last();
-		}
-		else
-		{
-			CurrentCore = EmitterCores[floor(CurrentCoreIndex)];
-		}
-
-		return CurrentCore;
-	}
-
-	return nullptr;
-
 }
 
-UHEmitterCoreBase* UHEmitterComponent::SelectedCoreByNum(int val)
-{
-	if (bIsTriggering && CurrentCore->IsShooting() )
-	{
-		return nullptr;
-	}
-	if (val == floor(CurrentCoreIndex))
-		return nullptr;
-
-	if (!EmitterCores.IsValidIndex(val))
-		return nullptr;
-
-	CurrentCoreIndex = val;
-	CurrentCore = EmitterCores[val];
-	return CurrentCore;
-}
-
-FTransform UHEmitterComponent::GetDefaultMuzzleTransform()
+bool UHEmitterComponent::ChangeFWEp(TSubclassOf<AHEmitterPattern> newPattern, AActor* instigator)
 {
 
-	AHPlayerCharacter* player = Cast<AHPlayerCharacter>(GetOwner());
-	if (player)
-	{
-// 		USceneComponent* EmitterMove = player->GetEmitterMoveComp();
-// 		if (ensure(EmitterMove))
-// 		{
-// 			return player->GetEmitterMoveComp()->GetComponentTransform();
-// 		}
-	}
-	return FTransform(GetOwner()->GetActorRotation(), GetOwner()->GetActorLocation() + 80*GetOwner()->GetActorForwardVector());
-
+	return true;
 }
 
-void UHEmitterComponent::AddCore(AActor* Instigator, TSubclassOf<UHEmitterCoreBase> CoreClass)
+bool UHEmitterComponent::Shoot(AActor* instegator)
 {
-	if (!CoreClass)
-		return;
 
-	if (EmitterCores.Num() >= CoreSlotsNum)
-	{
-		LogOnScreen(this, "AddCore filed! no enough Slot");
-		return;
-	}
-	UHEmitterCoreBase* CoreIns = NewObject<UHEmitterCoreBase>(GetOwner(), CoreClass);
-	if (ensure(CoreIns))
-	{
-		CoreIns->Initialize(this);
-		EmitterCores.Add(CoreIns);
-		CurrentCore = CoreIns;
-	}
+
+
+	return true;
 }
 
-class UHEmitterCoreBase* UHEmitterComponent::GetCore(TSubclassOf<UHEmitterCoreBase> CoreClass)
-{
-	if (!ensure(CoreClass))
-	{
-		return nullptr;
-	}
 
-	for (UHEmitterCoreBase* CoreIns: EmitterCores)
-	{
-		if (CoreIns && CoreIns->IsA(CoreClass))
-		{
-			return CoreIns;
-		}
-	}
-	return nullptr;
-
-}
 
 void UHEmitterComponent::RemoveCore(UHEmitterCoreBase* CoreToRemove)
 {
-	int32 key  = EmitterCores.Find(CoreToRemove);
-	if (key != -1)
-	{
-		EmitterCores.RemoveAt(key);
-	}
+
 }
 
 void UHEmitterComponent::OnTrigerPressed(AActor* instigator)
 {
-	//has checked Canemit() in EmitAction;
-	if (ensure(CurrentCore))
+	if (OwnerEmitter->IsBackward())
 	{
-		CurrentCore->OnPressedTrigger(instigator);
-
-		//IHEmitInterface::Execute_Emit(CurrentCore, instigator);
+		ensure(BKEmittePattern->Shoot(instigator) && CurrentPattern==BKEmittePattern);
 	}
-	else
-	{
-		FString msg = FString::Printf(TEXT("%s: Emitter Trigger Preseaed filed: Current core is Nullptr"), *GetNameSafe(instigator));
-		LogOnScreen(this, msg, FColor::Yellow);
-	}
+	ensure(FWEmittePattern->Shoot(instigator) && CurrentPattern== FWEmittePattern);
 
 }
 
 void UHEmitterComponent::OnTrigerReleased(AActor* instigator)
 {
+	CurrentPattern->StopShoot(instigator);
 	//has checked Canemit() in EmitAction;
-	if (ensure(CurrentCore))
-	{
-		CurrentCore->OnReleasedTriger(instigator);
-	}
-	else
-	{
-		FString msg = FString::Printf(TEXT("%s: Emitter Trigger Released filed: Current core is Nullptr"), *GetNameSafe(instigator));
-		LogOnScreen(this, msg, FColor::Yellow);
-	}
+// 	if (ensure(CurrentCore))
+// 	{
+// 		CurrentCore->OnReleasedTriger(instigator);
+// 	}
+// 	else
+// 	{
+// 		FString msg = FString::Printf(TEXT("%s: Emitter Trigger Released filed: Current core is Nullptr"), *GetNameSafe(instigator));
+// 		LogOnScreen(this, msg, FColor::Yellow);
+// 	}
 
 }
 
-// Called every frame
+
+
+//Called every frame
 void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -198,20 +171,36 @@ void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	//FString DebugMsg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
 	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::White, DebugMsg);
 
-	FColor currentCoreColor = bIsTriggering ? FColor::Yellow : FColor::Green;
-	if (CurrentCore)
+	FString active("Active");
+	FString relaxe("Relaxe");
+
+	FColor  curColor = BKEmittePattern == CurrentPattern ? FColor::White : FColor::Black;
+	FString CoreMsg;
+
+	if (BKEmittePattern->IsActivePattern())
 	{
-		currentCoreColor = CurrentCore->IsShooting() ? FColor::Red : currentCoreColor;
-
-		for (UHEmitterCoreBase* core : EmitterCores)
-		{
-			FColor TextColor = core == CurrentCore ? currentCoreColor : FColor::Blue;
-			FString CoreMsg = FString::Printf(TEXT("[%s] CurrentCore:%s"), *GetNameSafe(GetOwner()), *CurrentCore->CoreName.ToString());
-			LogOnScreen(this, CoreMsg, TextColor, 0.f);
-		}
-
+		 CoreMsg = FString::Printf(TEXT("[%s]:%s "), "BKPattern",active);
 	}
-		
+	else
+	{
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "BKPattern",relaxe);
+	}
+			
+	LogOnScreen(this, CoreMsg, curColor, 0.f);
+
+	curColor = FWEmittePattern== CurrentPattern ? FColor::White : FColor::Black;
+
+	if (FWEmittePattern->IsActivePattern())
+	{
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "FWPattern",active);
+	}
+	else
+	{
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "FWPattern",relaxe);
+	}
+			
+	LogOnScreen(this, CoreMsg, curColor, 0.f);
+
 }
 
 
@@ -220,3 +209,9 @@ UHEmitterComponent* UHEmitterComponent::GetEmitter(AActor* actor)
 {
 	return Cast<UHEmitterComponent>(actor->GetComponentByClass(UHEmitterComponent::StaticClass()));
 }
+
+void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+
+}
+

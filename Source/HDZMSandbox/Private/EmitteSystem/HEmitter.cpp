@@ -144,6 +144,10 @@ void AHEmitter::UpdateAimRotator(FVector CurrentTargetPivotLocation)
 void AHEmitter::InitInputBind()
 {
 	InputComponent->BindAxis("AdjustPitch",this,&AHEmitter::OnWheelSlide);
+	InputComponent->BindAction("Trigger",EInputEvent::IE_Pressed,this,&AHEmitter::OnTriggerPressed);
+	InputComponent->BindAction("Trigger",EInputEvent::IE_Released,this,&AHEmitter::OnTriggerReleased);
+
+
 }
 
 void AHEmitter::OnWheelSlide(float val)
@@ -216,6 +220,24 @@ AHEmitter::AHEmitter()
 
 }
 
+void AHEmitter::OnTriggerPressed()
+{
+	ComHEmitter->OnTrigerPressed(GetInstigator());
+
+}
+
+void AHEmitter::OnTriggerReleased()
+{
+
+	ComHEmitter->OnTrigerReleased(GetInstigator());
+}
+
+void AHEmitter::OnAimingstateChanged()
+{
+	ComHEmitter->OnSwitchAimingState();
+
+}
+
 // Called when the game starts or when spawned
 void AHEmitter::BeginPlay()
 {
@@ -253,14 +275,17 @@ void AHEmitter::Tick(float DeltaTime)
 
 	
 
-	if (bIsAim)
+	if (bIsAim != bPreIsAim) //Changed to true;
 	{
-		if (bIsAim != bPreIsAim) //Changed to true;
+		OnAimingstateChanged();
+		if (bIsAim)
 		{
 			EnteringAimingPitch = GetActorRotation().Pitch * -1.f;
+
 		}
 
 	}
+
 	bPreIsAim = bIsAim; //Update after check;
 	
 	UpdateEmitterBehaviour();

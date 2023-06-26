@@ -76,7 +76,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		float TargetDistance;
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
-		FVector SmoothPivotLocation;
+		FVector SmoothPivotLocation {0.f,0.f,0.f};
 
 	UPROPERTY(BlueprintReadOnly, Category = "Anim|CameraState")
 		FVector CameraLocation;
@@ -114,6 +114,7 @@ private:
 
 	void InitInputBind();
 
+
 	void OnWheelSlide(float val);
 
 	FRotator GetAimBackRotatorWithMoveInputFac();
@@ -130,7 +131,14 @@ public:
 	// Sets default values for this actor's properties
 	AHEmitter();
 
-	
+	// OnEvent
+protected:
+
+	//@TODO: also should add Action Container TagCheck.
+	void OnTriggerPressed();
+	void OnTriggerReleased();
+
+	void OnAimingstateChanged();
 
 
 protected:
@@ -141,6 +149,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	inline bool IsBackward() { return bIsAim; };
 
 	//偷懒
 	friend class UHEmitterAnim;

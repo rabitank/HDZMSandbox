@@ -2,12 +2,10 @@
 
 
 #include "HBulletBase.h"
-#include "Components/SphereComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Actor.h"
 #include "HPlayerCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "../HDZMSandbox.h"
+#include "Components/StaticMeshComponent.h"
 
 
 // Sets default values
@@ -16,11 +14,16 @@ AHBulletBase::AHBulletBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+
+	ComRoot = CreateDefaultSubobject<USceneComponent>("Root");
+	SetRootComponent(ComRoot);
+
 	ComMesh = CreateDefaultSubobject<UStaticMeshComponent>("BulletMesh");
-	RootComponent = ComMesh;
+	ComMesh->SetupAttachment(RootComponent);
 
 	//Created CollisionProfile "Projectile" in Engine-Collision
 	ComMesh->SetCollisionProfileName("Projectile");
+	ComMesh->SetCollisionProfileName("Bullet");
 	ComMesh->OnComponentHit.AddDynamic(this, &AHBulletBase::OnActorHit);
 
 	//collision APi etc:
@@ -46,25 +49,6 @@ void AHBulletBase::BeginPlay()
 
 }
 
-void AHBulletBase::ApplyRecoilForce_Implementation()
-{
-	APawn* InsPawn = Cast<APawn>(GetInstigator());
-	if (InsPawn)
-	{
-		AHPlayerCharacter* Player = Cast<AHPlayerCharacter>(InsPawn);
-		if (Player)
-		{
-			UCharacterMovementComponent* CompCharacterMove = Cast<UCharacterMovementComponent>(Player->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
-			if (CompCharacterMove)
-			{
-
-				FRotator rot = Player->GetController()->GetControlRotation();
-				CompCharacterMove->AddImpulse( - rot.Vector() * RecoilForce);
-			}
-		}
-	}
-}
-
 void AHBulletBase::OnActorHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& hit)
 {
 
@@ -76,6 +60,7 @@ void AHBulletBase::OnActorHit(UPrimitiveComponent* OverlappedComponent, AActor* 
 	}
 	Exploed();
 }
+
 
 void AHBulletBase::FadeAway_Implementation()
 {
@@ -107,15 +92,20 @@ void AHBulletBase::Exploed_Implementation()
 void AHBulletBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	LinearVelocity = FMath::Clamp(LinearVelocity + LinearAcceleration * DeltaTime, -MaxLinearVeclocity, MaxLinearVeclocity);
-	AngularVelocity += AngularAcceleration * DeltaTime;
+	UpdateAccelreation(DeltaTime);
+	UpdateVelcoity(DeltaTime);
 
 	AddActorLocalOffset(GetActorForwardVector() * LinearVelocity*DeltaTime , false);
-	AddActorLocalRotation(FQuat(GetActorForwardVector(),AngularVelocity*DeltaTime),false);
-	
+	AddActorLocalRotation(FQuat(GetActorUpVector(),AngularVelocity*DeltaTime),false);
 
 }
 
+void AHBulletBase::UpdateVelcoity(float DeltaTime)
+{
+
+	LinearVelocity = FMath::Clamp(LinearVelocity + LinearAcceleration * DeltaTime, -MaxLinearVeclocity, MaxLinearVeclocity);
+	AngularVelocity += AngularAcceleration * DeltaTime;
+
+}
 
 

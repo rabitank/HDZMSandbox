@@ -20,6 +20,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class UStaticMeshComponent* ComMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		class USceneComponent* ComRoot;
 	
 protected:
 	//UPROPERTY(EditDefaultsOnly, Category = "Bullet")
@@ -30,18 +32,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
 	FName BulletName;
 
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	float LinearVelocity;
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	float LinearAcceleration;
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	float MaxLinearVeclocity;
 
-	UPROPERTY( VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	float AngularVelocity;
-	UPROPERTY(VisibleAnywhere, EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	FVector AngularAxis {-1.f,0.f,0.f};
-	UPROPERTY(VisibleAnywhere,EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Bullet | Movement")
 	float AngularAcceleration{0.f};
 	
 
@@ -67,6 +69,8 @@ protected:
 	void Exploed();
 
 
+	virtual void UpdateVelcoity(float DeltaTime);
+	virtual void UpdateAccelreation(float DeltaTime) {};
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	//	class UParticleSystemComponent* ComEffectParticle;
 	//
@@ -76,5 +80,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+
+	inline void SetLinearVelocity(float LV) { LinearVelocity = LV; };
+	inline void SetLinearAcceleration(float LA) { LinearAcceleration = LA; };
+	inline void SetAngularVeloctiy(float AV) { AngularVelocity= AV; };
+	inline void SetAngularAcceleration(float AA) { AngularAcceleration= AA; };
 
 };
