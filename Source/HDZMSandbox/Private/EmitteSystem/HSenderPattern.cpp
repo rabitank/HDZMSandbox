@@ -24,7 +24,7 @@ void AHSenderPattern::InitPattern()
 		spawnParams.Instigator = GetInstigator();
 		spawnParams.Owner = this;
 
-		AHSender* senderIns = GetWorld()->SpawnActor<AHSender>(senderC, spawnParams);
+		AHSender* senderIns = GetWorld()->SpawnActor<AHSender>(senderC,GetTransform(),spawnParams);
 
 		senderIns->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 

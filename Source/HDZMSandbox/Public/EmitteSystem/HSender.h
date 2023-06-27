@@ -82,5 +82,10 @@ public:
 
 	void InitSender(FVector relativePositon,FRotator relativeRot);
 
+	//Õµ¿¡*2
+	friend class AHCard;
+	friend class AHEmitterPattern;
+
+
 
 };

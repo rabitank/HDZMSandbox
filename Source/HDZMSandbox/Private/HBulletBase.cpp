@@ -22,8 +22,8 @@ AHBulletBase::AHBulletBase()
 	ComMesh->SetupAttachment(RootComponent);
 
 	//Created CollisionProfile "Projectile" in Engine-Collision
-	ComMesh->SetCollisionProfileName("Projectile");
 	ComMesh->SetCollisionProfileName("Bullet");
+	ComMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	ComMesh->OnComponentHit.AddDynamic(this, &AHBulletBase::OnActorHit);
 
 	//collision APi etc:
@@ -95,8 +95,8 @@ void AHBulletBase::Tick(float DeltaTime)
 	UpdateAccelreation(DeltaTime);
 	UpdateVelcoity(DeltaTime);
 
-	AddActorLocalOffset(GetActorForwardVector() * LinearVelocity*DeltaTime , false);
-	AddActorLocalRotation(FQuat(GetActorUpVector(),AngularVelocity*DeltaTime),false);
+	AddActorLocalOffset(FVector::ForwardVector *LinearVelocity * DeltaTime, false);
+	AddActorLocalRotation(FQuat(FVector::UpVector,AngularVelocity*DeltaTime),false);
 
 }
 

@@ -70,6 +70,10 @@ protected:
 		FRotator  SmoothedRotator {0.f,0.f,0.f};
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		FRotator  AimingRotator {0.f,0.f,0.f};
+	UPROPERTY(BlueprintReadOnly, Category = "Anim")
+		float  AimingDistance {0.f};
+
+
 
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		float CurDistance;
@@ -150,7 +154,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	inline bool IsBackward() { return bIsAim; };
+	inline bool IsBackward() const { return bIsAim; };
+	inline float GetAimingDistance () const { return AimingDistance; };
+	inline USkeletalMeshComponent* GetMesh() const { return ComEmitterMesh; };
 
 	//偷懒
 	friend class UHEmitterAnim;

@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class HDZMSANDBOX_API AHEmitterPattern : public AHSenderPattern
 {
 	GENERATED_BODY()
@@ -27,10 +27,33 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsActive{ false };
 
+	
 
+	/// <summary>
+	/// use it after (Init) InitOffsetAngular!
+	/// </summary>
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,Category = "Transform")
+		bool bIsNeedOffset{false};
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,Category = "Transform")
+		float IntervalAngular{0.f};
+	
+	/// <summary>
+	/// 暂时公开..大概,主要没想好pattern的运动
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category = "Transform")
+		float SenderLength { 20.f };
+
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+		void InitOffsetAngular();
+	UFUNCTION(BlueprintCallable)
+		void SetSenderLengths(float length );
+
 
 public:
 	// Called every frame
@@ -39,11 +62,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitPattern() override;
 	
+	/// <summary>
+	/// 使sender对准PatternX方向上的一个位置. 
+	/// </summary>
+	UFUNCTION(BlueprintCallable)
+		void SetSenderRotateTo(float length );
+
 	
 	UFUNCTION(BlueprintCallable)
 		bool IsActivePattern() const { return bIsActive; };
 	UFUNCTION(BlueprintCallable)
 		bool IsShooting() const { return bIsShoot; };
+	
+
 
 	
 
@@ -61,7 +92,7 @@ public:
 		void PatternActive();
 	
 	
-
+	
 
 
 };

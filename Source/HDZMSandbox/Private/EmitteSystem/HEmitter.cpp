@@ -125,18 +125,24 @@ void AHEmitter::UpdateEmitterBehaviour()
 
 void AHEmitter::UpdateAimRotator(FVector CurrentTargetPivotLocation)
 {
+	const float tranceLength{ 40000 };
+
 	FVector StartP = CameraLocation + UKismetMathLibrary::GetForwardVector(CameraRotation) * 10;
-	FVector endP = CameraLocation + UKismetMathLibrary::GetForwardVector(CameraRotation) * 10000;
+	FVector endP = CameraLocation + UKismetMathLibrary::GetForwardVector(CameraRotation) * tranceLength;
+	AimingDistance = tranceLength;
 
 	FHitResult hitresult;
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(OwnerPawn);
 	queryParams.AddIgnoredActor(this);
 
+
 	if (GetWorld()->LineTraceSingleByChannel(hitresult, StartP, endP, ECC_Visibility, queryParams) && hitresult.IsValidBlockingHit())
 	{
 		endP = hitresult.Time>0.5f ? hitresult.Location : CameraLocation + UKismetMathLibrary::GetForwardVector(CameraRotation) * 5000;
+		AimingDistance = hitresult.Distance;
 	};
+
 	AimingRotator = UKismetMathLibrary::MakeRotFromX(endP - CurrentTargetPivotLocation);
 }
 

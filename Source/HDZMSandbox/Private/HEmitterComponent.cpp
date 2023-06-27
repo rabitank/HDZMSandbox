@@ -18,7 +18,6 @@ UHEmitterComponent::UHEmitterComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 	// ...
-
 }
 
 // Called when the game starts
@@ -48,14 +47,16 @@ bool UHEmitterComponent::SpawnAndInitPatternWithDelay(TSubclassOf<AHEmitterPatte
 		FActorSpawnParameters PatternParams;
 		PatternParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-
 		//@Discribtion: Instigator will pass to sender by getInstigator /¼´Apawn ->Player
 		PatternParams.Instigator = GetOwner()->GetInstigator();
-		patternIns = GetWorld()->SpawnActor<AHEmitterPattern>(pattern, OwnerEmitter->GetActorLocation(), OwnerEmitter->GetActorRotation(), PatternParams);
+		PatternParams.Owner = GetOwner();
+
+		patternIns = GetWorld()->SpawnActor<AHEmitterPattern>(pattern, OwnerEmitter->GetTransform(), PatternParams);
 		if (ensure(patternIns))
 		{
-			patternIns->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
+			//patternIns->AttachToComponent(OwnerEmitter->GetMesh(), { EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false }, TEXT("EmittePattern"));
+			patternIns->AttachToActor(OwnerEmitter, FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 			FTimerHandle TimerHandle_InitEmitterPattern;
 			FTimerDelegate delegate;
@@ -141,7 +142,7 @@ void UHEmitterComponent::OnTrigerPressed(AActor* instigator)
 	{
 		ensure(BKEmittePattern->Shoot(instigator) && CurrentPattern==BKEmittePattern);
 	}
-	ensure(FWEmittePattern->Shoot(instigator) && CurrentPattern== FWEmittePattern);
+	else ensure(FWEmittePattern->Shoot(instigator) && CurrentPattern== FWEmittePattern);
 
 }
 
@@ -171,19 +172,19 @@ void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	//FString DebugMsg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
 	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::White, DebugMsg);
 
-	FString active("Active");
-	FString relaxe("Relaxe");
+	FString active(TEXT("Active"));
+	FString relaxe(TEXT("Relaxe"));
 
 	FColor  curColor = BKEmittePattern == CurrentPattern ? FColor::White : FColor::Black;
 	FString CoreMsg;
 
 	if (BKEmittePattern->IsActivePattern())
 	{
-		 CoreMsg = FString::Printf(TEXT("[%s]:%s "), "BKPattern",active);
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), TEXT("BKPattern"),*active);
 	}
 	else
 	{
-		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "BKPattern",relaxe);
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), TEXT("BKPattern"),*relaxe);
 	}
 			
 	LogOnScreen(this, CoreMsg, curColor, 0.f);
@@ -192,14 +193,21 @@ void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 	if (FWEmittePattern->IsActivePattern())
 	{
-		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "FWPattern",active);
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), TEXT("FWPattern"),*active);
+		if (bShouldAim)
+		{
+			//TODO:a stable Distance connnection
+			FWEmittePattern->SetSenderRotateTo(OwnerEmitter->GetAimingDistance());
+		}
 	}
 	else
 	{
-		CoreMsg = FString::Printf(TEXT("[%s]:%s "), "FWPattern",relaxe);
+		CoreMsg = FString::Printf(TEXT("[%s]:%s "), TEXT("FWPattern"),*relaxe);
 	}
 			
 	LogOnScreen(this, CoreMsg, curColor, 0.f);
+
+
 
 }
 
@@ -210,8 +218,4 @@ UHEmitterComponent* UHEmitterComponent::GetEmitter(AActor* actor)
 	return Cast<UHEmitterComponent>(actor->GetComponentByClass(UHEmitterComponent::StaticClass()));
 }
 
-void UHEmitterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-
-}
 

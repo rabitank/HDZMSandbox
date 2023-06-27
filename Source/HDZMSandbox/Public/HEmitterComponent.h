@@ -28,9 +28,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
 		FName DefaultMuzzelSocketName;
 
-	UPROPERTY(EditDefaultsOnly,  Category = "Emitter | Init")
+	UPROPERTY(EditDefaultsOnly,  Category = "Emitter| Init")
 	TSubclassOf<AHEmitterPattern> BKEpClass ;
-	UPROPERTY(EditDefaultsOnly, Category = "Emitter | Init")
+	UPROPERTY(EditDefaultsOnly, Category = "Emitter| Init")
 	TSubclassOf<AHEmitterPattern> FWEpClass ;
 
 	
@@ -41,6 +41,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Emitter")
 	AHEmitterPattern* FWEmittePattern;
 	
+	/// <summary>
+	/// 指forward;BKp不会启用
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category ="Emitter")
+		bool bShouldAim{ false };
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite, Category = "Emitter")
 	class AHEmitter* OwnerEmitter ;
@@ -109,6 +114,10 @@ public:
 	inline bool GetTriggerState() {	return bIsTriggering ;};
 
 	static UHEmitterComponent* GetEmitter(AActor* actor);
+
+	UFUNCTION(BlueprintCallable)
+		void SetAimingTarget(bool shouldOpenAim) { bShouldAim = shouldOpenAim; };
+
 
 
 	// Called every frame
