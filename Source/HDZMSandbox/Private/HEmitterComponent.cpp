@@ -98,6 +98,11 @@ void UHEmitterComponent::SwitchPattern()
 		BKEmittePattern->PatternActive();
 
 	}
+	else
+	{
+		CurrentPattern = FWEmittePattern;
+		FWEmittePattern->PatternActive();
+	}
 }
 
 void UHEmitterComponent::OnSwitchAimingState()

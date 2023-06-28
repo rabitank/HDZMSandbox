@@ -9,8 +9,6 @@
 /**
  * 
  */
-
-
 UCLASS()
 class HDZMSANDBOX_API USBTService_CheckAttackRange : public UBTService
 {
@@ -23,7 +21,7 @@ public:
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "AI")
-	FBlackboardKeySelector AttackRangeKey; //avoid hard code name
+		FBlackboardKeySelector AttackRangeKey; //avoid hard code name
 
 	/** update next tick interval
 	* this function should be considered as const (don't modify state of object) if node is not instanced! */

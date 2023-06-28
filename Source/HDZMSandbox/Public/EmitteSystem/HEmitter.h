@@ -21,10 +21,11 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UArrowComponent* ComEmitterDirection;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class UHEmitterComponent* ComHEmitter;
 
 protected:
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Components")
+		class UHEmitterComponent* ComHEmitter;
 
 	//initialize in native already!
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Reference")
