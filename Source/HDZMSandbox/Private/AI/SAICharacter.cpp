@@ -37,18 +37,7 @@ ASAICharacter::ASAICharacter()
 
 void ASAICharacter::OnHealthChanged_Implementation(USAttributeComponent* owningComp, AActor* instigatorActor, float newHealth, float delta)
 {
-	if (delta < 0.f)
-	{
-		//react to Damage for others
-		if (instigatorActor != this)
-		{
-			//magicrojectile's Instigator
-			SetTargetActor(instigatorActor);
 
-			//flash
-			GetMesh()->SetScalarParameterValueOnMaterials(HitTimeParametersName,GetWorld()->TimeSeconds);
-
-		}
 
 		if (ActiveHealthBar == nullptr)
 		{
@@ -93,13 +82,12 @@ void ASAICharacter::OnHealthChanged_Implementation(USAttributeComponent* owningC
 			//disapeare
 			SetLifeSpan(10.f);
 		}
-	}
+	
 }
 
 void ASAICharacter::SetTargetActor(AActor* target)
 {
 	AAIController* aIcontroller = Cast<AAIController>(GetController());
-
 	if (aIcontroller)
 	{
 		UBlackboardComponent* comBlackBoard = aIcontroller->GetBlackboardComponent();

@@ -18,74 +18,61 @@ public:
 private:
 	float CurRelaxTime{0.f};
 
-	
-
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class UStaticMeshComponent* ComMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class USceneComponent* ComRoot;
-	/// <summary>
-	/// 是否是世界中作为机关放置的Emitter
-	/// </summary>
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Settings")
-		bool  bWorldSender{false};
-
-	/*
-	* SenderSetting 里的一些东西似乎有些多余
-	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Settings| SenderSetting")
-		class UHSenderSettings* SenderSettings;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+		class AHBulletBase* SampleBullet;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+		float Interval{1.f};
 	
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
-		bool bRecoverBulletBehaviour{false};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
-		float BulletVelocity{500.f};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
-		float BulletVelAce {0.f};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
-		float BulletAngAce{0.f};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
-		float BulletAngVel{5.f};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings| BulletSetting")
 		bool bOpenShooting{false};
 
-
-
 	UFUNCTION()
-	void SpawnBullet();
+	AHBulletBase* SpawnBullet(FVector loc,FRotator dir) const;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	void InitSender();
-	void Shooting();
 
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(BlueprintNativeEvent,BlueprintCallable)
+	void Shooting();
 
-	UFUNCTION(BlueprintNativeEvent)
-		void InitBullet(AHBulletBase* bullet);
 	
 	UFUNCTION(BlueprintNativeEvent)
 		void UpdateSenderBehaviour(float DeltaTime);
-	
 	UFUNCTION(BlueprintCallable)
 		void OpenSender(AActor* instagor);
 	UFUNCTION(BlueprintCallable)
 		void CloseSender(AActor* instagor);
+	
+	UFUNCTION(BlueprintCallable)
+		void ResetInterval(float newInterval);
+	UFUNCTION(BlueprintCallable)
+		void ResetSampleBullet(AHBulletBase* sample);
 
-	void InitSender(FVector relativePositon,FRotator relativeRot);
+	
+	UFUNCTION(BlueprintCallable)
+	void InitSender(AHBulletBase* sample);
+	UFUNCTION(BlueprintCallable)
+	void InitSender_IS(float senderInterval,AHBulletBase* sample);
+	///已弃用
+	UFUNCTION(BlueprintCallable)
+	void InitSender_IPR(float senderInterval,FVector relativePosition,FRotator relativeRot);
 
-	//偷懒*2
-	friend class AHCard;
+	UFUNCTION(BlueprintCallable)
+	void SetSenderRelativeTransform(FVector relativePosition, FRotator relativeRot);
+
+	friend class AHSenderPattern;
 	friend class AHEmitterPattern;
-
-
-
+	
 };

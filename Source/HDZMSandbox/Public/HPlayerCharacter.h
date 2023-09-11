@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "HBulletBase.h"
+#include "LineSTG/HBulletBase.h"
 #include "State/HShootType.h"
 #include "AlsCharacter.h"
 #include "AlsCameraComponent.h"
@@ -28,14 +28,17 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Meta = (AllowPrivateAccess))
 		class UAlsCameraComponent* ComAlsCamera;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class UHActionComponent* ComActions;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Components")
 		class UHAttributeComponent* ComAttribute;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Components")
 		class USphereComponent* ComSphereCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Components")
+		class USphereComponent* ComAbsorb;
 
 
 	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
@@ -44,6 +47,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "EmitterControl")
 		bool bEmitterAiming{false};
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Absorb")
+		float AbsorbDefaultRadius{ 80.f };
+
 
 
 

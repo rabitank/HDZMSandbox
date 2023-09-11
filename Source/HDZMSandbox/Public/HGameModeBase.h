@@ -15,4 +15,5 @@ class HDZMSANDBOX_API AHGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 public:
 	virtual void OnActorKilled(AActor* VictimActor, AActor* Killer);
+
 };

@@ -13,6 +13,7 @@ static TAutoConsoleVariable<float> CvarDamageMultiplier(TEXT("su.DamageMultiplie
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 {
+
 	HealthMax = 100;
 	Health = HealthMax;
 	
@@ -147,11 +148,5 @@ float USAttributeComponent::GetMaxHealth()
 bool USAttributeComponent::IsAlive()
 {
 	return Health > 0.f ;
-}
-
-bool USAttributeComponent::IsLowHealth()
-{
-	//@fixme: what is low level health?
-	return Health / HealthMax < 0.5f;
 }
 

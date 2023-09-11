@@ -2,8 +2,9 @@
 
 
 #include "EmitteSystem/HSender.h"
-#include "EmitteSystem/HSenderSettings.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "EmitteSystem/HSenderPattern.h"
+#include "LineSTG/HBulletBase.h"
 
 // Sets default values
 AHSender::AHSender()
@@ -21,54 +22,29 @@ AHSender::AHSender()
 	ComMesh->bIgnoreRadialForce = true;
 	ComMesh->bIgnoreRadialImpulse = true;
 	ComMesh->SetCollisionProfileName("Sender");
-
-	
 	ComMesh->SetGenerateOverlapEvents(false);
-
-
+	
 }
-
-void AHSender::SpawnBullet()
+AHBulletBase* AHSender::SpawnBullet(FVector loc,FRotator dir) const
 {
-
-	for (auto atrace : SenderSettings->BulletTraces)
+	if(IsValid(SampleBullet))
 	{
-		FActorSpawnParameters bulletPawnPars;
-		bulletPawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		bulletPawnPars.Instigator = GetInstigator();
-
-
-		AHBulletBase* bullet =Cast<AHBulletBase>(GetWorld()->SpawnActor<AActor>(SenderSettings->BulletType,GetActorLocation(), UKismetMathLibrary::ComposeRotators(GetActorRotation(), atrace), bulletPawnPars));
-		if (bRecoverBulletBehaviour)  InitBullet(bullet);
-	
+		//DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FSenderSpawnBulletDelegate, AHSenderPattern*, emittePatternIns, FName, bulletName, AActor*, playerInstigator);
+		return SampleBullet->CloneTo(loc,dir);
 	}
-	
-
+	UE_LOG(LogTemp,Warning,TEXT("SpawnBulletFaild:%s's samplebullet isn't valid"), *this->GetName());
+	return nullptr;
 }
 
 // Called when the game starts or when spawned
 void AHSender::BeginPlay()
 {
 	Super::BeginPlay();
-
-
-	check(IsValid(SenderSettings));
-	check(IsValid(SenderSettings->BulletType));
-
-
-	if(!bWorldSender) InitSender();
-
-	CurRelaxTime = SenderSettings->Interval;
-
-
 }
-
-
 
 void AHSender::OpenSender(AActor* instagor)
 {
 	bOpenShooting = true;
-	CurRelaxTime = SenderSettings->Interval;
 }
 
 void AHSender::CloseSender(AActor* instagor)
@@ -77,22 +53,29 @@ void AHSender::CloseSender(AActor* instagor)
 }
 
 /// <summary>
-/// controled by initsetings
+/// controled by initsetings. And Need 使用DefferSpawn时的初始化.
 /// </summary>
-void AHSender::InitSender()
+void AHSender::InitSender(AHBulletBase* sample)
 {
-
-	//remenber set Parent Actor;
-	SetActorRelativeLocation(SenderSettings->SenderInitPosition, false);
-	SetActorRelativeRotation(SenderSettings->SenderInitRotator.Quaternion(), false);
+	CurRelaxTime = 0.f;
+	Interval = 0.2f;
+	bOpenShooting = false;
+	ResetSampleBullet(SampleBullet);
+}
+void AHSender::InitSender_IPR(float interval,FVector relativePositon, FRotator relativeRot)
+{
+	Interval = Interval;
+	CurRelaxTime = Interval;
+	bOpenShooting = false;
+	SetSenderRelativeTransform(relativePositon, relativeRot);
+}
+void AHSender::InitSender_IS(float interval,AHBulletBase* sample)
+{
+	ResetSampleBullet(SampleBullet);
+	InitSender_IPR(Interval,FVector(0.f),FRotator(0.f));
 }
 
-/// <summary>
-/// controlled by Patterns
-/// </summary>
-/// <param name="relativePositon"></param>
-/// <param name="relativeRot"></param>
-void AHSender::InitSender(FVector relativePositon, FRotator relativeRot)
+void AHSender::SetSenderRelativeTransform(FVector relativePositon, FRotator relativeRot)
 {
 	//remenber set Parent Actor;
 	SetActorRelativeLocation(relativePositon, false);
@@ -104,9 +87,31 @@ void AHSender::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	UpdateSenderBehaviour(DeltaTime);
-
 }
 
+void AHSender::Shooting_Implementation()
+{
+	SpawnBullet(GetActorLocation(),GetActorRotation());
+}
+
+void AHSender::ResetInterval(float newInterval)
+{
+	const float hasp{Interval - CurRelaxTime};
+	CurRelaxTime = newInterval - hasp;
+	if (CurRelaxTime<0)
+	{
+		CurRelaxTime = -0.001;
+	}
+	Interval = newInterval;
+}
+
+void AHSender::ResetSampleBullet(AHBulletBase* sample)
+{
+	if(IsValid(sample))
+	{
+		SampleBullet = sample;
+	}
+}
 
 void AHSender::UpdateSenderBehaviour_Implementation(float DeltaTime)
 {
@@ -117,25 +122,9 @@ void AHSender::UpdateSenderBehaviour_Implementation(float DeltaTime)
 		if (CurRelaxTime < 0)
 		{
 			Shooting();
-			CurRelaxTime += SenderSettings->Interval;
+			CurRelaxTime += Interval;
 		}
 	}
-
 }
 
-//
-void AHSender::Shooting()
-{
-	SpawnBullet();
-}
-
-
-void AHSender::InitBullet_Implementation(AHBulletBase* bullet)
-{
-	bullet->SetLinearVelocity(BulletVelocity);
-	bullet->SetLinearAcceleration(BulletVelAce);
-	bullet->SetAngularVeloctiy(BulletAngVel);
-	bullet->SetAngularAcceleration(BulletAngAce);
-
-};
 

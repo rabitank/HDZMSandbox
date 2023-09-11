@@ -4,12 +4,18 @@
 #include "EmitteSystem/HEmitterPattern.h"
 #include "EmitteSystem/HSender.h"
 #include "Kismet/KismetMathLibrary.h"
-
+#include "EmitteSystem/ESPMBlueprintFunctionLibrary.h"
+#include "HPlayerCharacter.h"
+#include "EmitteSystem/HEmitter.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void AHEmitterPattern::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OnFullShootDelegate.AddDynamic(this,&AHEmitterPattern::OnFullShoot);
+
 }
 
 void AHEmitterPattern::InitOffsetAngular()
@@ -27,7 +33,7 @@ void AHEmitterPattern::SetSenderLengths(float length)
 	for (int i = 0; i < SendersIns.Num(); i++)
 	{
 		auto senderIns = SendersIns[i];
-		//…Ë÷√Œª÷√µ»
+		//ËÆæÁΩÆ‰ΩçÁΩÆÁ≠â
 
 		auto relativeDirection = senderIns->RootComponent->GetRelativeLocation();
 		relativeDirection.Normalize();
@@ -42,7 +48,7 @@ void AHEmitterPattern::SetSenderRotateTo(float length)
 	for (int i = 0; i < SendersIns.Num(); i++)
 	{
 		auto senderIns = SendersIns[i];
-		//…Ë÷√Œª÷√µ»
+		//ËÆæÁΩÆ‰ΩçÁΩÆÁ≠â
 
 		auto relativeDirection = senderIns->RootComponent->GetRelativeLocation();
 		relativeDirection.X = -length;
@@ -51,27 +57,50 @@ void AHEmitterPattern::SetSenderRotateTo(float length)
 	}
 }
 
+void AHEmitterPattern::OnFullShoot(AHSenderPattern* emittepattern,AHBulletBase* sampleBullet,AActor* senderOwner)
+{
+		ensure(UESPMBlueprintFunctionLibrary::ApplyEmittePatternEnergy(this, Cast<AHEmitter>(GetOwner()), senderOwner));
+		if (bShouldRecoil)
+		{
+
+			GEngine->AddOnScreenDebugMessage(0, 0.1f, FColor::Red, TEXT("Recoil"));
+			AHPlayerCharacter* target = Cast<AHPlayerCharacter>(senderOwner);
+			ensure(target);
+			UESPMBlueprintFunctionLibrary::AddRecoilByEmittePattern(PatterName, Cast<AHEmitter>(GetOwner()), target);
+			ShootedNum = 0;
+		}
+		if (!UESPMBlueprintFunctionLibrary::HasEnoughOneShootEnergy(this, Cast<AHEmitter>(GetOwner()), senderOwner))
+		{
+			GEngine->AddOnScreenDebugMessage(0, 0.2f, FColor::Red, TEXT("Has not enough energy!"));
+			StopShoot(senderOwner);
+		}
+}
 void AHEmitterPattern::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AHEmitterPattern::InitPattern()
+void AHEmitterPattern::InitEmitterPattern()
 {
-	Super::InitPattern();
+	FActorSpawnParameters params;
+	params.Instigator= GetInstigator();
+	params.Owner = GetOwner();
+	AHBulletBase* bullet  = GetWorld()->SpawnActor<AHBulletBase>(NativeBulletType,GetActorTransform(),params);
+	if(ensure(bullet))
+	{
+		Super::InitPattern(PreSenderInterval,bullet);
+	}
+	
 	InitOffsetAngular();
-
 	const float offsetAngular{ bIsNeedOffset ? IntervalAngular/2.f: 0.f };
-
-	for (int i = 0; i < SendersIns.Num(); i++)
+	for(int i = 0; i<SendersIns.Num();i++)
 	{
 		auto senderIns = SendersIns[i];
-		//…Ë÷√Œª÷√µ»
+		//ËÆæÁΩÆ‰ΩçÁΩÆÁ≠â
 		//senderIns->InitSender(FQuat({ 1.f,0.f,0.f }, FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
-		senderIns->InitSender(FQuat({ 1.f,0.f,0.f }, FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
-
+		senderIns->SetSenderRelativeTransform(FQuat({ 1.f,0.f,0.f },FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)),
+			FRotator(0.f));
 	}
-
 }
 
 void AHEmitterPattern::PatternActive_Implementation()
@@ -108,12 +137,17 @@ bool AHEmitterPattern::Shoot_Implementation(AActor* instagor)
 {
 	if (!bIsActive)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("∑¢…‰ƒ£ Ω’˝‘⁄–›œ¢,æ‹æ¯∑¢…‰"));
+		UE_LOG(LogTemp, Warning, TEXT("ÂèëÂ∞ÑÊ®°ÂºèÊ≠£Âú®‰ºëÊÅØ,ÊãíÁªùÂèëÂ∞Ñ"));
+		return false;
+	}
+
+	if (!UESPMBlueprintFunctionLibrary::HasEnoughOneShootEnergy(this, Cast<AHEmitter>(GetOwner()), instagor))
+	{
+		GEngine->AddOnScreenDebugMessage(0, 0.2f, FColor::Red, TEXT("Has not enough energy!"));
 		return false;
 	}
 
 	bIsShoot = true;
-
 	for (AHSender* senderIns:SendersIns)
 	{
 		senderIns->OpenSender(instagor);
@@ -137,8 +171,8 @@ void AHEmitterPattern::UpdateSendersTransform_Implementation()
 	for (int i = 0; i < insNum; i++)
 	{
 		auto senderIns = SendersIns[i];
-		//…Ë÷√Œª÷√µ»
-		senderIns->InitSender(FQuat({ 1.f,0.f,0.f }, intervalAngular * i + offsetAngular).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
+		//ËÆæÁΩÆ‰ΩçÁΩÆÁ≠â
+		senderIns->SetSenderRelativeTransform(FQuat({ 1.f,0.f,0.f }, intervalAngular * i + offsetAngular).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
 	}
 
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise">
+    <file url="file://$PROJECT_DIR$/Source/HDZMSandbox/Private/HEmitterComponent.cpp" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Source/HDZMSandbox/Public/EmitteSystem/ESPMBlueprintFunctionLibrary.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Source/HDZMSandbox/Public/EmitteSystem/HEmitterPattern.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Source/HDZMSandbox/Public/EmitteSystem/HSender.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Source/HDZMSandbox/Public/LineSTG/LineSTGBlueprintFunctionLibrary.h" charset="GBK" />
+    <file url="PROJECT" charset="GBK" />
+  </component>
+</project>

@@ -16,13 +16,16 @@ class HDZMSANDBOX_API AHEmitter : public AActor
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		class USkeletalMeshComponent* ComEmitterMesh;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
 		class UArrowComponent* ComEmitterDirection;
-
+	
 
 protected:
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Components")
+		class USkeletalMeshComponent* ComEmitterMesh;
+
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Components")
+		class UHEnergyComponent* ComEnergy;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Components")
 		class UHEmitterComponent* ComHEmitter;
@@ -51,7 +54,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Pawn States")
 		FVector  InputAcceleration {FVector::ZeroVector};
 	
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Config")
+		class UHEmitterSettings* ESPMBaseSetting;
 	
+	
+
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Config")
 		float  EmitterRadius {57.f};
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Config")
@@ -60,8 +67,9 @@ protected:
 	//遇到阻碍emitter改变距离轴心的距离时的速度.
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Config")
 		float  AdaptDistSpeed{10.f};
-	
-	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Config")
+		FVector LagSpeed {19,19,20};/*= FVector(14,14,16) */
+
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		float  DeltaSeconds{0.001f};
 
@@ -71,6 +79,8 @@ protected:
 		FRotator  SmoothedRotator {0.f,0.f,0.f};
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		FRotator  AimingRotator {0.f,0.f,0.f};
+	
+
 	UPROPERTY(BlueprintReadOnly, Category = "Anim")
 		float  AimingDistance {0.f};
 
@@ -126,7 +136,7 @@ private:
 	FRotator GetAimBackRotatorWithControlFac();
 
 
-	FVector CaculateAxisIndepentLag(FVector CurrentLocation, FVector InputTargetLocation, FRotator InputTargetRotator, FVector LagSpeed = FVector(14,14,16) );
+	FVector CaculateAxisIndepentLag(FVector CurrentLocation, FVector InputTargetLocation, FRotator InputTargetRotator );
 
 	UFUNCTION(BlueprintCallable)
 		float GetEmitterCurveValue(FName CurveName);
@@ -158,6 +168,8 @@ public:
 	inline bool IsBackward() const { return bIsAim; };
 	inline float GetAimingDistance () const { return AimingDistance; };
 	inline USkeletalMeshComponent* GetMesh() const { return ComEmitterMesh; };
+
+	inline UHEmitterSettings* GetESPMSettings() const { return ESPMBaseSetting; };
 
 	//偷懒
 	friend class UHEmitterAnim;

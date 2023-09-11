@@ -14,9 +14,12 @@ class HDZMSANDBOX_API UHGameModeFunctionLibrary : public UBlueprintFunctionLibra
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION(BlueprintCallable, Category = "Gameplay")
-	static bool ApplyEnergy(AActor* CauserActor, AActor* TargetActor, float EnergyAmount);
 
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
-	static bool ApplyDirectionalEnergy(AActor* CauserActor, AActor* TargetActor, float EnergyAmount, const FHitResult& hit);
+		static bool ApplyDamage(AActor* CauserActor, AActor* TargetActor, float DamageAmount);
+
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+		static bool ApplyDirectionalDamage(AActor* CauserActor, AActor* TargetActor, float DamageAmount, const FHitResult& hit);
+
+
 };

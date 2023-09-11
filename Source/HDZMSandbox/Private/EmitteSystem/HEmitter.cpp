@@ -11,6 +11,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "EmitteSystem/HEnergyComponent.h"
 
 void AHEmitter::UpdateEssentialValues()
 {
@@ -188,7 +189,7 @@ inline FRotator AHEmitter::GetAimBackRotatorWithControlFac()
 	return  FRotator(EnteringAimingPitch, tempYaw, CharacterRotator.Roll);
 }
 
-inline FVector AHEmitter::CaculateAxisIndepentLag(FVector CurrentLocation, FVector TargetLocation, FRotator InputTargetRotator, FVector LagSpeed /*= FVector(14,14,16) */)
+inline FVector AHEmitter::CaculateAxisIndepentLag(FVector CurrentLocation, FVector TargetLocation, FRotator InputTargetRotator)
 {
 	FRotator TargetRotatroYaw{ 0.f,0.f,InputTargetRotator.Yaw };
 
@@ -223,6 +224,9 @@ AHEmitter::AHEmitter()
 	ComEmitterDirection->SetupAttachment(ComEmitterMesh);
 
 	ComHEmitter = CreateDefaultSubobject<UHEmitterComponent>("EmitterFunc");
+
+	ComEnergy = CreateDefaultSubobject<UHEnergyComponent>("EmitterEnergy");
+
 
 }
 

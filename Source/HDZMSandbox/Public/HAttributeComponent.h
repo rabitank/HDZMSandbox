@@ -8,7 +8,7 @@
 #include "HAttributeComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnEnergyChanged, class UHAttributeComponent*, owningComp, AActor*, instigatorActor, float, newAttribute, float, delta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterStateChanged, class UHAttributeComponent*, owningComp, AActor*, instigatorActor, float, newAttribute, float, delta);
 
 static TAutoConsoleVariable<bool> CvarStaticEnergy(TEXT("hd.StaticEnergy"), false, TEXT("Enable spawning of bots via timer."), ECVF_Cheat);
 
@@ -26,43 +26,48 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-	float Energy;
-	
+		float Health{0.f};
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-	float EnergyMax;
-	
-	//EnergyDangerou means absorbed to m
+		float HealthMax{100.f};
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-	float EnergyDangerou;
+		float HealthDangerouPersent{ 0.2f };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
+	float HealthDangerou;
 	
-
-
 	UPROPERTY(BlueprintAssignable)
-		FOnEnergyChanged OnEnergyChanged;
+		FOnCharacterStateChanged OnHealthChanged;
+
 
 public:	
+
 	UFUNCTION(BlueprintCallable)
-		bool ApplyEnergyChangeDelta(AActor* Instigator,float delta);
+		bool ApplyHealthChangeDelta(AActor* Instigator,float delta);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-		float GetEnergy() { return Energy; }
-	
+		float GetHealth() { return Health; }
 	UFUNCTION(BlueprintCallable)
-		bool IsAffordable(float DemandEnergy) const { return Energy - DemandEnergy >= 0; }
+		bool IsHealthAffordable(float DemandHealth) const { return Health + DemandHealth>= 0; }
+	UFUNCTION(BlueprintCallable)
+		bool IsHealthDangerou() const { return Health >= HealthDangerou; };
+	UFUNCTION(BlueprintCallable)
+		bool IsHealthFull() const { return Health == HealthMax; };
 
 	UFUNCTION(BlueprintCallable)
-		bool IsDangerouOrInit() const { return Energy >= EnergyDangerou; };
+	void RestoreHealthToFull();
 
+	virtual void PostInitProperties() override ;
 
-	UFUNCTION(BlueprintCallable)
-	void RestoreEnergyToInitLevel();
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
-
-
+	UFUNCTION(BlueprintCallable, Category = "Attribute")
 	static UHAttributeComponent* GetAttribute(AActor* formActor);
 
-		
+
+
 };

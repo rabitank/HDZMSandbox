@@ -20,6 +20,8 @@ private:
 	 * this function should be considered as const (don't modify state of object) if node is not instanced! */
 		virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
+		float MaxBulletSpread;
+
 protected:
 	UPROPERTY(EditAnywhere)
 	FBlackboardKeySelector TargetSelector;
@@ -27,4 +29,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AI Attack")
 	TSubclassOf<AActor> ProjectileClass;
 	
+	USBTTask_RangeAttack();
+
 };

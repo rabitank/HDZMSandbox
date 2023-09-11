@@ -50,39 +50,39 @@ void UHEmitterCorePrimary::StopShoot_Implementation(AActor* Instigator)
 
 void UHEmitterCorePrimary::StartShoot_Implementation(AActor* Instiagtor)
 {
-	Super::StartShoot_Implementation(Instiagtor);
-
-
-	FActorSpawnParameters SMagspawnPars;
-	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-
-	APawn* pawnInstigator = Cast<APawn>(Instiagtor);
-	//if nullptr , bullet will hurt everyone;
-	SMagspawnPars.Instigator = pawnInstigator;
-	
-	//emit from Muzzle Slot Position!
-	//HEmitterComp should keep the slot/slot name;
-
-	AActor* spawnedBullet = nullptr;
-	if (ensure(BulletClass))
-		spawnedBullet = GetWorld()->SpawnActor<AActor>(BulletClass, ComOwnerEmitter->GetDefaultMuzzleTransform(), SMagspawnPars);
-
-
-	//if successed spawned , ApplyEnergy
-	if (spawnedBullet)
-	{
-		if (ComOwnerEnergySource)
-		{
-			ComOwnerEnergySource->ApplyEnergyChangeDelta(ComOwnerEnergySource->GetOwner(), -EnergyDemand);
-		}
-
-		FTimerDelegate dele;
-		dele.BindUFunction(this, "StopShoot", Instiagtor);
-		GetWorld()->GetTimerManager().SetTimer(TimeHandle_StopShoot, dele, 0.2f, false);
-		return;
-	}
-
-	LogOnScreen(this, "Bullet spawn failed!");
+// 	Super::StartShoot_Implementation(Instiagtor);
+// 
+// 
+// 	FActorSpawnParameters SMagspawnPars;
+// 	SMagspawnPars.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+// 
+// 
+// 	APawn* pawnInstigator = Cast<APawn>(Instiagtor);
+// 	//if nullptr , bullet will hurt everyone;
+// 	SMagspawnPars.Instigator = pawnInstigator;
+// 	
+// 	//emit from Muzzle Slot Position!
+// 	//HEmitterComp should keep the slot/slot name;
+// 
+// 	AActor* spawnedBullet = nullptr;
+// 	if (ensure(BulletClass))
+// 		spawnedBullet = GetWorld()->SpawnActor<AActor>(BulletClass, ComOwnerEmitter->GetDefaultMuzzleTransform(), SMagspawnPars);
+// 
+// 
+// 	//if successed spawned , ApplyEnergy
+// 	if (spawnedBullet)
+// 	{
+// 		if (ComOwnerEnergySource)
+// 		{
+// 			ComOwnerEnergySource->ApplyEnergyChangeDelta(ComOwnerEnergySource->GetOwner(), -EnergyDemand);
+// 		}
+// 
+// 		FTimerDelegate dele;
+// 		dele.BindUFunction(this, "StopShoot", Instiagtor);
+// 		GetWorld()->GetTimerManager().SetTimer(TimeHandle_StopShoot, dele, 0.2f, false);
+// 		return;
+// 	}
+// 
+// 	LogOnScreen(this, "Bullet spawn failed!");
 
 }

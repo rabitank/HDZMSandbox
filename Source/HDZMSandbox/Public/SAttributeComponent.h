@@ -65,7 +65,7 @@ public:
 	FOnAttributeChanged OnRageChanged;
 
 	UFUNCTION(BlueprintCallable)
-	bool ApplyHealthChangeDelta(float delta, AActor* Instigator = nullptr);
+	bool ApplyHealthChangeDelta(float delta, AActor* InstigatorActor);
 	
 	UFUNCTION(BlueprintCallable)
 	bool ApplyRageChangeDelta(float delta, AActor* Instigator = nullptr);
@@ -86,9 +86,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive();
-	
-	UFUNCTION(BlueprintCallable)
-	bool IsLowHealth();
 
 	UFUNCTION()
 	inline	bool IsMaxHealth() { return Health == HealthMax; }
@@ -100,10 +97,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Attribute")
 	static USAttributeComponent* GetAttributes(AActor* formActor) ;
+
 	
 	//DisplayName is name in bp
 	UFUNCTION(BlueprintCallable, Category = "Attribute", meta = (DisplayName = "IsAlive"))
 	static bool IsActorAlive(AActor* queryActor) ;
-
-
+	UFUNCTION()
+	bool IsLowHealth() const { return Health / HealthMax < 0.4f; };
 };

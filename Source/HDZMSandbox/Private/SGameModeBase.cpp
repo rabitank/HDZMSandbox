@@ -236,8 +236,6 @@ void ASGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 		float RespawnDelay = 2.f;
 		GetWorldTimerManager().SetTimer(TimerHandle_RespawnPlayerDelay, Delegate, RespawnDelay, false);
 
-
-		
 	}
 
 	APawn* killerPawn = Cast<APawn>(Killer);

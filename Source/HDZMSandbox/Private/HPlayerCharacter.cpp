@@ -52,6 +52,9 @@ AHPlayerCharacter::AHPlayerCharacter()
 	ComSphereCollision = CreateDefaultSubobject<USphereComponent>("HPlaComSphereCollision");
 	ComSphereCollision->SetupAttachment(GetRootComponent());
 
+	ComAbsorb = CreateDefaultSubobject<USphereComponent>("HPlaComAbsorb");
+	ComAbsorb->SetupAttachment(GetRootComponent());
+	ComAbsorb->SetSphereRadius(AbsorbDefaultRadius);
 
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;

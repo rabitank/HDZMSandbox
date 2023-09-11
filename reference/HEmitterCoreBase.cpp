@@ -70,7 +70,7 @@ bool UHEmitterCoreBase::CanEmit(AActor* Instigator)
 			};
 
 			//need affored energy
-			UHAttributeComponent* attribute = UHAttributeComponent::GetAttribute(OwnerPawn);
+			UHEmitterComponent* attribute = UHEmitterComponent::GetAttribute(OwnerPawn);
 			if (!attribute->IsAffordable(EnergyDemand))
 			{
 				return false;
@@ -109,7 +109,7 @@ void UHEmitterCoreBase::StopShoot_Implementation(AActor* Instigator)
 	FString msg = FString::Printf(TEXT("Core: %s StopShooting"), *CoreName.ToString());
 	LogOnScreen(this, msg, FColor::Yellow);
 
-	ComOwnerEmitter->OnShootStoped.Broadcast(this,Instigator);
+	//ComOwnerEmitter->OnShootStoped.Broadcast(this,Instigator);
 	
 }
 
@@ -120,7 +120,7 @@ void UHEmitterCoreBase::StartShoot_Implementation(AActor* Instigator)
 	FString msg = FString::Printf(TEXT("Core: %s StartShooting"), *CoreName.ToString());
 	LogOnScreen(this, msg, FColor::Green);
 
-	ComOwnerEmitter->OnShootStarted.Broadcast(this,Instigator);
+	//ComOwnerEmitter->OnShootStarted.Broadcast(this,Instigator);
 
 
 

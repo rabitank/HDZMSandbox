@@ -55,6 +55,7 @@ ASCharacter::ASCharacter()
 
 	HitTimeParametersName = TEXT("HitTime");
 
+
 }
 
 FVector ASCharacter::GetPawnViewLocation() const
@@ -90,6 +91,7 @@ void ASCharacter::OnHealthChanged(USAttributeComponent* owningComp, AActor* inst
 			SetLifeSpan(10.f);
 			
 			DisableInput(controllerPC);
+
 		}
 		// Rage added equal to damage received (Abs to turn into positive rage number)
 	}
@@ -194,8 +196,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	//AddControllerYawInput at Apawn
 	//you should open "Use Pawn Control Rotation" at springArmCom to allow playerController to controll arm
-	PlayerInputComponent->BindAxis("LookRightMouse", this, &ASCharacter::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUpMouse", this, &ASCharacter::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("MouseX", this, &ASCharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("MouseY", this, &ASCharacter::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack",IE_Pressed,this,&ASCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("Jump",IE_Pressed,this,&ASCharacter::Jump);

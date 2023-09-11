@@ -32,7 +32,9 @@ void UHEmitterComponent::BeginPlay()
 	SpawnAndInitPatternWithDelay(FWEpClass, FWEmittePattern);
 
 	FWEmittePattern->PatternActive();
+	SwitchToFW(FWEmittePattern);
 	BKEmittePattern->PatternRelax();
+	SwitchToBK(BKEmittePattern);
 	CurrentPattern = FWEmittePattern;
 
 
@@ -72,9 +74,12 @@ bool UHEmitterComponent::SpawnAndInitPatternWithDelay(TSubclassOf<AHEmitterPatte
 	return false;
 }
 
+
+
+
 void UHEmitterComponent::DelayInitPattern_Elaps(AHEmitterPattern* EpIns)
 {
-	EpIns->InitPattern();
+	EpIns->InitEmitterPattern();
 	bAbleShoot = true;
 }
 
@@ -85,12 +90,17 @@ void UHEmitterComponent::SwitchPattern()
 	check(BKEmittePattern);
 	check(FWEmittePattern);
 
+
 	BKEmittePattern->PatternRelax();
 	FWEmittePattern->PatternRelax();
 	
 	auto newPattern = BKEmittePattern;
 	BKEmittePattern = FWEmittePattern;
 	FWEmittePattern = newPattern;
+
+	SwitchToBK(BKEmittePattern);
+	SwitchToFW(FWEmittePattern);
+
 	
 	if (OwnerEmitter->IsBackward())
 	{
@@ -104,6 +114,24 @@ void UHEmitterComponent::SwitchPattern()
 		FWEmittePattern->PatternActive();
 	}
 }
+
+/// <summary>
+/// 进行一系列的后向初始化
+/// </summary>
+void UHEmitterComponent::SwitchToBK_Implementation(AHEmitterPattern* emitterpattern)
+{
+	emitterpattern->SetShouldRecoil(true);
+}
+
+/// <summary>
+/// 进行一系列的前向初始化
+/// </summary>
+void UHEmitterComponent::SwitchToFW_Implementation(AHEmitterPattern* emitterpattern)
+{
+	emitterpattern->SetShouldRecoil(false);
+
+}
+
 
 void UHEmitterComponent::OnSwitchAimingState()
 {
@@ -134,15 +162,14 @@ bool UHEmitterComponent::Shoot(AActor* instegator)
 	return true;
 }
 
-
-
-void UHEmitterComponent::RemoveCore(UHEmitterCoreBase* CoreToRemove)
+void UHEmitterComponent::RemovePattern(AHEmitterPattern* PatternToRemove)
 {
 
 }
 
 void UHEmitterComponent::OnTrigerPressed(AActor* instigator)
 {
+	
 	if (OwnerEmitter->IsBackward())
 	{
 		ensure(BKEmittePattern->Shoot(instigator) && CurrentPattern==BKEmittePattern);
@@ -154,7 +181,7 @@ void UHEmitterComponent::OnTrigerPressed(AActor* instigator)
 void UHEmitterComponent::OnTrigerReleased(AActor* instigator)
 {
 	CurrentPattern->StopShoot(instigator);
-	//has checked Canemit() in EmitAction;
+//has checked Canemit() in EmitAction;
 // 	if (ensure(CurrentCore))
 // 	{
 // 		CurrentCore->OnReleasedTriger(instigator);

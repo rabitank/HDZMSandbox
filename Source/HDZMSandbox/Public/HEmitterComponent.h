@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "HEmitterCoreBase.h"
 #include "Delegates/DelegateCombinations.h"
 #include "HEmitterComponent.generated.h"
 
@@ -46,7 +45,7 @@ protected:
 	AHEmitterPattern* FWEmittePattern;
 	
 	/// <summary>
-	/// Ö¸forward;BKp²»»áÆôÓÃ
+	/// æŒ‡forward;BKpä¸ä¼šå¯ç”¨
 	/// </summary>
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category ="Emitter")
 		bool bShouldAim{ false };
@@ -64,28 +63,28 @@ public:
 
 
 	/// <summary>
-	/// @ÃèÊö: ½»»»Bk ºÍ FWÊ¹ÓÃµÄEp. ²»»áºÜ³£ÓÃµÄ
+	/// @æè¿°: äº¤æ¢Bk å’Œ FWä½¿ç”¨çš„Ep. ä¸ä¼šå¾ˆå¸¸ç”¨çš„
 	/// </summary>
 	UFUNCTION(BlueprintCallable ,Category="EmitterModify")
 	void SwitchPattern();
 	
 	/// <summary>
-	/// @ÃèÊö: ÇĞ»»Ãé×¼×´Ì¬, ¼´¶ÔÓ¦EmitterµÄAiming. ¼¤»îÄ³FW/BK
+	/// @æè¿°: åˆ‡æ¢ç„å‡†çŠ¶æ€, å³å¯¹åº”Emitterçš„Aiming. æ¿€æ´»æŸFW/BK
 	/// </summary>
 	UFUNCTION(BlueprintCallable)
 	void OnSwitchAimingState();
 	
 	/// <summary>
-	/// @ÃèÊö: ÇĞ»»FWµÄEp, ¼´¸Ä±äFWEp.
+	/// @æè¿°: åˆ‡æ¢FWçš„Ep, å³æ”¹å˜FWEp.
 	/// </summary>
 	UFUNCTION(BlueprintCallable, Category = "EmitterModify")
 	bool ChangeFWEp(TSubclassOf<AHEmitterPattern> newPattern,AActor* instigator);
 	
 	/// <summary>
-	/// @ÃèÊö:´«´ï¿ª»ğ.
+	/// @æè¿°:ä¼ è¾¾å¼€ç«.
 	/// </summary>
 	/// <param name="instegator"></param>
-	/// <returns> ·µ»ØÊÇ·ñÍ¨¹ı </returns>
+	/// <returns> è¿”å›æ˜¯å¦é€šè¿‡ </returns>
 	UFUNCTION(BlueprintCallable)
 	bool Shoot(AActor* instegator);
 
@@ -104,10 +103,15 @@ public:
 	//wait for more complexed core to use
 
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
-	void RemoveCore(UHEmitterCoreBase* CoreToRemove);
+	void RemovePattern(AHEmitterPattern* PatternToRemove);
 
 
 public:
+
+
+	/// <summary>
+	/// åœ¨opensenderå‰æ£€æŸ¥æ˜¯å¦å¤Ÿä¸€å‘çš„èƒ½é‡,åœ¨OnFullShootæ£€æŸ¥æ˜¯å¦å‰©ä¸‹çš„èƒ½é‡å¤Ÿä¸€å‘,ä¸å¤Ÿåˆ™åœæ­¢
+	/// </summary>
 	UFUNCTION(BlueprintCallable)
 	void OnTrigerPressed(AActor* instigator);
 	
@@ -128,12 +132,20 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	/// <summary>
-	/// ÔİÊ±Áô´æ°É.¿ÉÄÜĞèÒª¼ÓÉÏÏìÓ¦µÄÃÉÌ«Ææ¶¯»­.
+	/// æš‚æ—¶ç•™å­˜å§.å¯èƒ½éœ€è¦åŠ ä¸Šå“åº”çš„è’™å¤ªå¥‡åŠ¨ç”».
 	/// </summary>
 	FOnShootingStateChanged OnShootStarted;
 	FOnShootingStateChanged OnShootStoped;
 
 	UFUNCTION(BlueprintCallable)
 		bool SpawnAndInitPatternWithDelay(TSubclassOf<AHEmitterPattern> pattern, AHEmitterPattern*& patternIns,float delay=0.2f);
-		
+	
+	UFUNCTION(BlueprintNativeEvent)
+		void SwitchToBK(AHEmitterPattern* emitterpattern );
+
+	UFUNCTION(BlueprintNativeEvent)
+		void SwitchToFW(AHEmitterPattern* emitterpattern);
+
+
+
 };

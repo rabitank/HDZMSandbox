@@ -3,20 +3,27 @@
 #include "HGameModeFunctionLibrary.h"
 #include "HAttributeComponent.h"
 
-bool UHGameModeFunctionLibrary::ApplyEnergy(AActor* CauserActor, AActor* TargetActor, float DamageAmount)
+
+
+bool UHGameModeFunctionLibrary::ApplyDamage(AActor* CauserActor, AActor* TargetActor, float DamageAmount)
 {
-	UHAttributeComponent* targetAttribute = UHAttributeComponent::GetAttribute(TargetActor);
-	if(targetAttribute)
+	if (!ensureMsgf(DamageAmount < 0.f, TEXT("ApplyDamged need negative value!")))
 	{
-		return targetAttribute->ApplyEnergyChangeDelta(CauserActor, DamageAmount);
+		return false;
+	}
+
+	UHAttributeComponent* attribute = UHAttributeComponent::GetAttribute(TargetActor);
+	if (attribute)
+	{
+		return attribute->ApplyHealthChangeDelta(CauserActor,DamageAmount);
 	}
 	return false;
 }
 
-
-bool UHGameModeFunctionLibrary::ApplyDirectionalEnergy(AActor* CauserActor, AActor* TargetActor, float DamageAmount, const FHitResult& hit)
+bool UHGameModeFunctionLibrary::ApplyDirectionalDamage(AActor* CauserActor, AActor* TargetActor, float DamageAmount, const FHitResult& hit)
 {
-	if (ApplyEnergy(CauserActor, TargetActor, DamageAmount))
+
+	if (ApplyDamage(CauserActor, TargetActor, DamageAmount))
 	{
 		UPrimitiveComponent* comHit = hit.GetComponent();
 		if (comHit && comHit->IsSimulatingPhysics(hit.BoneName))
@@ -26,6 +33,5 @@ bool UHGameModeFunctionLibrary::ApplyDirectionalEnergy(AActor* CauserActor, AAct
 		return true;
 	}
 	return false;
-
 
 }

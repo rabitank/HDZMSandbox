@@ -15,11 +15,7 @@ UHAttributeComponent::UHAttributeComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	EnergyMax = 100;
-	EnergyDangerou = 0.8 * EnergyMax;
-	Energy = EnergyDangerou;
 }
-
 
 // Called when the game starts
 void UHAttributeComponent::BeginPlay()
@@ -30,7 +26,7 @@ void UHAttributeComponent::BeginPlay()
 	
 }
 
-bool UHAttributeComponent::ApplyEnergyChangeDelta(AActor* Instigator, float delta)
+bool UHAttributeComponent::ApplyHealthChangeDelta(AActor* Instigator, float delta)
 {
 	//for God()
 	if (!GetOwner()->CanBeDamaged() && delta < 0.f)
@@ -44,45 +40,23 @@ bool UHAttributeComponent::ApplyEnergyChangeDelta(AActor* Instigator, float delt
 		delta *= IncreaseMultiplier;
 	}
 
-	float oldEnergy = Energy;
-	float NewEnergy = FMath::Clamp(Energy + delta, -1.f, EnergyMax+1);
+	float oldHealth = Health;
+	Health = FMath::Clamp(Health + delta, 0.f, HealthMax);
 
-	bool overMax = false;
-	float actualDelta=0;
+	float actualDelta = 0;
+	actualDelta = Health - oldHealth;
 
-	//expend energe
-	if (NewEnergy<0.f && delta <0.f)
-	{
-		//delta <0.f maybe not neccessry
-		return false;
-	}
-	//over die
-	else if(NewEnergy > EnergyMax)
-	{
-		// if oldEnergy is eual EnergyMax,actualDelta will be 1.f
-		// should we broadcast died EnergyChanged?
-		overMax = true;
-		Energy = EnergyMax; 
-	}
-	//normal
-	else 
-	{
-		Energy = NewEnergy; 
-	}
-
-	actualDelta = NewEnergy - oldEnergy;
-	
-	DrawDebugString(GetWorld(), GetOwner()->GetActorLocation(),FString::Printf(TEXT("delta Energy %f, curent Energy: %f"), actualDelta, Energy),NULL,FColor::Red,2.f);
+	DrawDebugString(GetWorld(), GetOwner()->GetActorLocation(), FString::Printf(TEXT("delta Health %f, curent Health: %f"), actualDelta, Health), NULL, FColor::Red, 2.f);
 
 	if (actualDelta != 0.f)
 	{
-		OnEnergyChanged.Broadcast(this, Instigator, Energy, actualDelta);
+		OnHealthChanged.Broadcast(this, Instigator, Health, actualDelta);
 	};
 
-	if (actualDelta > 0.f && Energy>EnergyDangerou)
+	if (actualDelta < 0.f && Health < HealthDangerou)
 	{
-		LogOnScreen(this, "Energe has Reached to DangerousLevel", FColor::Yellow, 1.f);
-		if (overMax)
+		LogOnScreen(this, "Health has Reached to DangerousLevel", FColor::Yellow, 1.f);
+		if (!Health)
 		{
 			AHGameModeBase* gameMode = GetWorld()->GetAuthGameMode<AHGameModeBase>();
 			if (gameMode)
@@ -104,13 +78,31 @@ void UHAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	// ...
 }
 
-void UHAttributeComponent::RestoreEnergyToInitLevel()
+void UHAttributeComponent::RestoreHealthToFull()
 {
-	if (IsDangerouOrInit())
+	if (IsHealthFull())
 		return;
-	ApplyEnergyChangeDelta(GetOwner(), EnergyDangerou - Energy);
+	ApplyHealthChangeDelta(GetOwner(), HealthMax - Health);
 }
 
+void UHAttributeComponent::PostInitProperties()
+{
+
+	Super::PostInitProperties();
+	HealthDangerou = HealthMax * HealthDangerouPersent;
+
+
+}
+
+#if WITH_EDITOR
+void UHAttributeComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	HealthDangerou = HealthMax * HealthDangerouPersent;
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+}
+#endif
 
 UHAttributeComponent* UHAttributeComponent::GetAttribute(AActor* actor)
 {
@@ -123,3 +115,5 @@ UHAttributeComponent* UHAttributeComponent::GetAttribute(AActor* actor)
 	}
 	return nullptr;
 }
+
+
