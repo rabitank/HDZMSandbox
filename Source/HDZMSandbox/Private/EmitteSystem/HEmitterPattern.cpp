@@ -7,7 +7,6 @@
 #include "EmitteSystem/ESPMBlueprintFunctionLibrary.h"
 #include "HPlayerCharacter.h"
 #include "EmitteSystem/HEmitter.h"
-#include "Kismet/GameplayStatics.h"
 
 
 void AHEmitterPattern::BeginPlay()
@@ -18,11 +17,10 @@ void AHEmitterPattern::BeginPlay()
 
 }
 
-void AHEmitterPattern::InitOffsetAngular()
+inline void AHEmitterPattern::InitOffsetAngular()
 {
-	int insNum = SendersIns.Num();
-	IntervalAngular = 360.f / insNum;
-	if (!(insNum % 2))
+	IntervalAngular = 360.f /SendersNum;
+	if (!(SendersNum% 2))
 	{
 		bIsNeedOffset = true;
 	}
@@ -75,6 +73,20 @@ void AHEmitterPattern::OnFullShoot(AHSenderPattern* emittepattern,AHBulletBase* 
 			StopShoot(senderOwner);
 		}
 }
+
+void AHEmitterPattern::SetSendersInitData_Implementation(TArray<FSenderInitData>& datas)
+{
+	Super::SetSendersInitData_Implementation(datas);
+	InitOffsetAngular();
+	const float offsetAngular{ bIsNeedOffset ? IntervalAngular/2.f: 0.f };
+	for(int i = 0; i<SendersNum;i++)
+	{
+		//设置位置等
+		//senderIns->InitSender(FQuat({ 1.f,0.f,0.f }, FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
+		SendersInitDatas.Emplace(FQuat({ 1.f,0.f,0.f },FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)),
+		FRotator(0.f),0);
+	}
+}
 void AHEmitterPattern::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -89,17 +101,6 @@ void AHEmitterPattern::InitEmitterPattern()
 	if(ensure(bullet))
 	{
 		Super::InitPattern(PreSenderInterval,bullet);
-	}
-	
-	InitOffsetAngular();
-	const float offsetAngular{ bIsNeedOffset ? IntervalAngular/2.f: 0.f };
-	for(int i = 0; i<SendersIns.Num();i++)
-	{
-		auto senderIns = SendersIns[i];
-		//设置位置等
-		//senderIns->InitSender(FQuat({ 1.f,0.f,0.f }, FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)), FRotator(0.f));
-		senderIns->SetSenderRelativeTransform(FQuat({ 1.f,0.f,0.f },FMath::DegreesToRadians(IntervalAngular* i + offsetAngular)).RotateVector(FVector(0.f, 0.f, SenderLength)),
-			FRotator(0.f));
 	}
 }
 

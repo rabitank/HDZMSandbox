@@ -29,10 +29,11 @@ protected:
 		bool bIsShoot{ false };
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsActive{ false };
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		bool bShouldRecoil{false};
-
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+		int SendersNum{1};
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		FName PatterName {TEXT("Default") };
 	//原生子弹类型. player使用的emitterpattern的子弹类会较为恒定,从蓝图来生成Samplebullet并传递,该逻辑不能交给character来完成.
@@ -110,7 +111,7 @@ public:
 	/// 呃呃呃,扣点能量,计数添加后坐力啥的 -> 都交给Manage
 	/// </summary>
 	UFUNCTION(BlueprintCallable)
-		void OnFullShoot(AHSenderPattern* emittepattern,AHBulletBase* sampleBulle,AActor* senderOwner );
+		void OnFullShoot(AHSenderPattern* emitterpattern,AHBulletBase* sampleBulle,AActor* senderOwner );
 	
 	UFUNCTION(BlueprintCallable)
 	inline FName GetPatternName() const { return PatterName; };
@@ -119,4 +120,5 @@ public:
 
 
 
+	virtual void SetSendersInitData_Implementation(TArray<FSenderInitData>& datas) override;;  
 };

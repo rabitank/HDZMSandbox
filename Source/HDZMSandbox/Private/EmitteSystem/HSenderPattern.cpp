@@ -4,6 +4,7 @@
 #include "EmitteSystem/HSenderPattern.h"
 #include "EmitteSystem/HSender.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AHSenderPattern::AHSenderPattern()
@@ -35,26 +36,38 @@ void AHSenderPattern::ResetPatternShoot_Implementation(float interval, AHBulletB
 
 void AHSenderPattern::InitPattern_Implementation(float interval, AHBulletBase* samplebullet)
 {
-	if(IsValid(samplebullet)) SampleBullet = samplebullet;
+	ensure(SenderClasses[0]);
+	SetSendersInitData(SendersInitDatas);
+	
+	ensure(SendersInitDatas.IsValidIndex(0));
+	if(ensure(samplebullet)) SampleBullet = samplebullet;
 	else
 	{
 		UE_LOG(LogTemp,Warning,TEXT("InitPattern Failed:%s's samplerbullet isn't valid"),*GetName());
 		return;
 	}
-	for (TSubclassOf<AHSender> senderC : Senders)
+	samplebullet->OnBulletClone.AddDynamic(this,&AHSenderPattern::OnSampleBulletClone);
+
+	const FAttachmentTransformRules rule{EAttachmentRule::KeepWorld,EAttachmentRule::KeepWorld,EAttachmentRule::KeepWorld,false};
+	for (const FSenderInitData& SenderD : SendersInitDatas)
 	{
+		const FTransform transform(SenderD.senderInitAbsRot,
+			    SenderD.senderInitPos.operator+(GetActorLocation()));
+		 
 		//TODO: SetHEmitterPatterns Insitgator as Player;And other set;
-		AHSender* senderIns =  Cast<AHSender>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this,senderC,GetTransform(),ESpawnActorCollisionHandlingMethod::AlwaysSpawn));
+		AHSender* senderIns =  Cast<AHSender>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this,
+			SenderClasses.IsValidIndex(SenderD.senderClassIndex)?SenderClasses[SenderD.senderClassIndex]:SenderClasses.Last(),
+			transform,ESpawnActorCollisionHandlingMethod::AlwaysSpawn));
 		ensure(senderIns);
 		senderIns->InitSender_IS(interval,samplebullet);
 		senderIns->SetOwner(this);
 		senderIns->SetInstigator(GetInstigator());
-		UGameplayStatics::FinishSpawningActor(senderIns,GetTransform());
-		senderIns->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
-		SendersIns.Add(senderIns);
+		UGameplayStatics::FinishSpawningActor(senderIns,transform);
 
-		samplebullet->OnBulletClone.AddDynamic(this,&AHSenderPattern::OnSampleBulletClone);
+		senderIns->AttachToActor(this,rule);
+		SendersIns.Add(senderIns);
 	}
+	
 }
 
 AHSender* AHSenderPattern::Pop()
@@ -66,13 +79,38 @@ AHSender* AHSenderPattern::Pop()
 	return SendersIns[CurSender++];
 	
 }
-
+/// 一定要重写!!!!!
+///  用于生成初始化senders的初始位置合senders的类型
+/// @datas: 传入的是 SenderInitDatas
+void AHSenderPattern::SetSendersInitData_Implementation(TArray<FSenderInitData>& datas)
+{
+}
 void AHSenderPattern::OnSampleBulletClone(AHBulletBase* YX, FName bulletName, AHBulletBase* cloneIns)
 {
 	CurBulletNums++;
 	if(CurBulletNums%SendersIns.Num()==0)
 	{
 		OnFullShootDelegate.Broadcast(this,SampleBullet,GetOwner());
+	}
+	
+}
+
+void AHSenderPattern::OpenSenders()
+{
+	ensure(SendersIns.IsValidIndex(0));
+	for(auto ins:SendersIns)
+	{
+		ins->OpenSender(GetInstigator());
+	}
+	
+}
+
+void AHSenderPattern::CloseSenders()
+{
+	ensure(SendersIns.IsValidIndex(0));
+	for(auto ins:SendersIns)
+	{
+		ins->CloseSender(GetInstigator());
 	}
 	
 }

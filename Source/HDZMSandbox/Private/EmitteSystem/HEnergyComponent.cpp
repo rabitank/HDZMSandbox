@@ -5,8 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include <../HDZMSandbox.h>
 
-static TAutoConsoleVariable<float> CvarIncreaseMultiplier(TEXT("hd.DamageMultiplier"), 1.f, TEXT("Global IncreaseEnergy modifier for Attribute	Component."), ECVF_Cheat);
-
+static TAutoConsoleVariable<float> CvarIncreaseMultiplier(TEXT("hd.EnergyMultiplier"), 1.f, TEXT("Global IncreaseEnergy modifier for Energy Component."), ECVF_Cheat);
 UHEnergyComponent::UHEnergyComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;

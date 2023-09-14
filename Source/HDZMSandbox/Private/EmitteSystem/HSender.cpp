@@ -60,19 +60,19 @@ void AHSender::InitSender(AHBulletBase* sample)
 	CurRelaxTime = 0.f;
 	Interval = 0.2f;
 	bOpenShooting = false;
-	ResetSampleBullet(SampleBullet);
+	ResetSampleBullet(sample);
 }
 void AHSender::InitSender_IPR(float interval,FVector relativePositon, FRotator relativeRot)
 {
-	Interval = Interval;
-	CurRelaxTime = Interval;
+	Interval = interval;
+	CurRelaxTime = interval;
 	bOpenShooting = false;
-	SetSenderRelativeTransform(relativePositon, relativeRot);
+	SetActorTransform( {relativeRot, relativePositon},false);
 }
 void AHSender::InitSender_IS(float interval,AHBulletBase* sample)
 {
-	ResetSampleBullet(SampleBullet);
-	InitSender_IPR(Interval,FVector(0.f),FRotator(0.f));
+	ResetSampleBullet(sample);
+	Interval = interval;
 }
 
 void AHSender::SetSenderRelativeTransform(FVector relativePositon, FRotator relativeRot)
